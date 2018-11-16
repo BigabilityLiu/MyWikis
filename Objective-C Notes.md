@@ -1,5 +1,6 @@
 # Objective-C Notes
-[The basics of Objective-C tutorial series by raywenderlich.com](https://www.youtube.com/playlist?list=PL23Revp-82LLqM6azUAr9at03whFNL9Ld)
+教程合集
+* [The basics of Objective-C tutorial series by raywenderlich.com](https://www.youtube.com/playlist?list=PL23Revp-82LLqM6azUAr9at03whFNL9Ld)
 ## [Property Attributes](https://stackoverflow.com/questions/8927727/objective-c-arc-strong-vs-retain-and-weak-vs-assign)
 ### 原子性
 * `atomic(默认)`它保证你一定可以得到一个确定的数据值，而不是一个混乱的内存空间。它保证当对一个变量进行多线程多进程的读和写操作时，也可以返回一个确定
@@ -21,3 +22,20 @@ should be used instead of self to avoid memory cycles）
 * `assign(默认)`主要用于C语言简单类型比如int float bool；
 * `copy`常用与像string和所有可变的Object上and so on...只有实现了NSCopying协议，并且实现了其中的copyWithZone:方法的对象才能被拷贝。
 ⚠️`retain(默认)`==`strong`。`weak`约等于`assign`，`assign`用于C语言基本类型，`weak`用于references to Objective-C objects.
+## Blocks
+[fuckingblocksyntax.com/](http://fuckingblocksyntax.com/)
+### 示例
+`TableViewCell.h`
+```
+@property (nonatomic, copy, nullable) void (^myBlock)(void);
+```
+`TableViewCell.m`
+```
+self.myBlock();// call this block;
+```
+`ViewController.m`
+ ```
+    cell.myBlock = ^{
+        NSLog(@"call this block from cell");
+    };
+ ```
