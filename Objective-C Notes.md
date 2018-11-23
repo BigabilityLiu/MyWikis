@@ -40,3 +40,7 @@ self.myBlock();// call this block;
         NSLog(@"call this block from cell");
     };
  ```
+
+## KVC & KVO
+##### [From Objccn.io](https://objccn.io/issue-7-3/)
+##### [facebook/KVOController](https://github.com/facebook/KVOController)
