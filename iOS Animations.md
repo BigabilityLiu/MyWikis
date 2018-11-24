@@ -1,3 +1,11 @@
+### 转场动画
+```swift
+let ca = CATransition()
+ca.type = "cube"//"push"...
+ca.subtype = kCATransitionFromLeft//"FromRight"...
+ca.duration = 0.5
+imageView.layer.addAnimation(ca, forKey: nil)
+```
 ### 普通动画
 ```swift
 heading.center.x  -= view.bounds.width
