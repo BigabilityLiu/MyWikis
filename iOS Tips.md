@@ -1,9 +1,9 @@
 # UI Tips
 ### 不显示statueBar
 ```swift
-    override func prefersStatusBarHidden() -> Bool {
-        return true
-    }
+override func prefersStatusBarHidden() -> Bool {
+    return true
+}
 ```
 ### 对约束进行操作
 ```swift
@@ -15,14 +15,12 @@ view.layoutIfNeeded()
 ### tableView头图片下拉放大效果
 ```swift
 var imageView = UIImageView()
-```
-```swift
+
 imageView.frame = CGRectMake(0, 0, self.view.frame.width, 180)
 imageView.image = UIImage(named: "img")
 self.view.addSubview(imageView)//UITableViewContronller
 tableView.tableHeaderView = UIView(frame: CGRectMake(0, 0, self.view.frame.width, 180))
-```
-```swift
+
 override func scrollViewDidScroll(scrollView: UIScrollView) {
         let offY = scrollView.contentOffset.y
         print(offY)
@@ -41,6 +39,38 @@ if tableView.isEditing {
         self.navigationController?.barHideOnSwipeGestureRecognizer.cancelsTouchesInView = false
 }else{
         self.navigationController?.barHideOnSwipeGestureRecognizer.cancelsTouchesInView = true
+}
+```
+### 点击cell，以展开cell显示更多内容
+```swift
+func addNotesViewToCell(cell: ChecklistItemTableViewCell){
+    notesView.heightAnchor.constraintEqualToConstant(notesViewHeight).active = true
+    notesView.clipsToBounds = true        
+    cell.stackView.addArrangedSubview(notesView)
+}
+func removeNotesView() {
+    if let stackView = notesView.superview as? UIStackView {
+        stackView.removeArrangedSubview(notesView)
+        notesView.removeFromSuperview()
+    }
+}
+{
+    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        guard let cell = tableView.cellForRowAtIndexPath(indexPath) as?
+            ChecklistItemTableViewCell else {
+                return
+        }
+        tableView.beginUpdates()
+        
+        if cell.stackView.arrangedSubviews.contains(notesView) {
+            removeNotesView()
+        } else {
+            addNotesViewToCell(cell)
+            notesTextView.text = checklist.items[indexPath.row].notes
+        }
+       
+        tableView.endUpdates()
+    }
 }
 ```
 # Controllers
