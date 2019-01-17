@@ -44,3 +44,75 @@ self.myBlock();// call this block;
 ## KVC & KVO
 ##### [From Objccn.io](https://objccn.io/issue-7-3/)
 ##### [facebook/KVOController](https://github.com/facebook/KVOController)
+
+## weakSelf & strongSelf
+##### [深入研究 Block 用 weakSelf、strongSelf、@weakify、@strongify 解决循环引用](https://halfrost.com/ios_block_retain_circle/)
+##### [stackoverflow self & block](https://stackoverflow.com/questions/20030873/always-pass-weak-reference-of-self-into-block-in-arc)
+##### [Raywenderlich Instruments-tutorial](https://www.raywenderlich.com/397-instruments-tutorial-with-swift-getting-started)
+### 示例
+`Model.h`
+```
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+typedef void(^Study)(void);
+@interface Student : NSObject
+@property (nonatomic, copy) NSString* name;
+@property (nonatomic, copy) Study study;
+@end
+
+@interface Teacher : NSObject
+@property (copy , nonatomic) NSString *name;
+@property (strong, nonatomic) Student *student;
+@end
+NS_ASSUME_NONNULL_END
+```
+`Model.m`
+```
+#import "Model.h"
+@implementation Student
+@end
+@implementation Teacher
+@end
+```
+`ViewController.m`
+```
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    Student *student = [[Student alloc]init];
+    Teacher *teacher = [[Teacher alloc]init];
+    
+    teacher.name = @"i'm teacher";
+    teacher.student = student;
+    
+    student.name = @"halfrost";
+    student.study = ^{
+        NSLog(@"my name is = %@",strongTeacher.name);
+    };
+    student.study();
+}
+@end
+```
+👆此处出现了异常。teacher持有student，student持有study block，block持有student，三方相互持有造成异常<br>
+修改如下：
+```
+    __weak __typeof(teacher) weakTeacher = teacher;
+    student.study = ^{
+        NSLog(@"my name is = %@",weakTeacher.name);
+    };
+```
+但在study block运行时并不能保证每次teacher都不为空，所以需要修改为以下：
+```
+    __weak __typeof(teacher) weakTeacher = teacher;
+    student.study = ^{
+        __strong __typeof(weakTeacher) strongTeacher = weakTeacher;
+        if (strongTeacher) {
+            NSLog(@"my name is = %@",strongTeacher.name);
+        }
+    };
+    teacher = nil;//假设在执行block前出现意外
+    student.study();
+```
+strongSelf的目的是因为一旦进入block执行，不允许self在这个执行过程中释放。block执行完后这个strongSelf 会自动释放，不会存在循环引用问题。但是依然需要判断strongSelf是否为空，因为strongSelf只能保证在函数内即block内不为空，不能保证外部情况。
