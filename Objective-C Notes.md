@@ -116,3 +116,9 @@ NS_ASSUME_NONNULL_END
     student.study();
 ```
 strongSelf的目的是因为一旦进入block执行，不允许self在这个执行过程中释放。block执行完后这个strongSelf 会自动释放，不会存在循环引用问题。但是依然需要判断strongSelf是否为空，因为strongSelf只能保证在函数内即block内不为空，不能保证外部情况。
+
+# Effective Objective-C 读书笔记
+## 第2条：在类的头文件中尽量少引入其他头文件
+应该在.h文件中尽量使用`@class XXX;`引入类，在.m文件中需要用到时，再使用`#import "XXX".h` 引入头文件,原因：
+1. 使用`#import`会引入该类中的所有内容，增加编译时间
+2. 两个类头文件中都使用`#import`引入对方类头文件，会导致其中一个类无法编译
