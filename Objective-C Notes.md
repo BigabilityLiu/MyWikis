@@ -1,5 +1,5 @@
 # 目录
-[Objective-C Notes](https://github.com/BigabilityLiu/MyWikis/edit/master/Objective-C%20Notes.md/#Objective-C%20Notes)
+[Objective-C Notes](https://github.com/BigabilityLiu/MyWikis/blob/master/Objective-C%20Notes.md/#Objective-C%20Notes)
 
 # Objective-C Notes
 教程合集
