@@ -126,7 +126,7 @@ strongSelf的目的是因为一旦进入block执行，不允许self在这个执�
 使用#define时如果有人重新定义了常量值，编译器不会发出警告，从而导致应用程序中的常量值不一致。<br>
 局部变量,在.m文件中的使用static const来定义，例如：
  ```
- static const NSString* testString1 = @"t1";
+ static const NSString* TestString = @"TestString";
  ```
 全局变量，需要.h文件中使用extern来声明，并在.m文件中实现，通常其名称需要加以隔离，通常用类名做前缀。例如：
 ```
