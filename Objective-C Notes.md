@@ -1,6 +1,3 @@
-# 目录
-[Objective-C Notes](https://github.com/BigabilityLiu/MyWikis/blob/master/Objective-C%20Notes.md/#objective-c-notes)
-
 # Objective-C Notes
 教程合集
 * [The basics of Objective-C tutorial series by raywenderlich.com](https://www.youtube.com/playlist?list=PL23Revp-82LLqM6azUAr9at03whFNL9Ld)
@@ -125,3 +122,16 @@ strongSelf的目的是因为一旦进入block执行，不允许self在这个执�
 应该在.h文件中尽量使用`@class XXX;`引入类，在.m文件中需要用到时，再使用`#import "XXX".h` 引入头文件,原因：
 1. 使用`#import`会引入该类中的所有内容，增加编译时间
 2. 两个类头文件中都使用`#import`引入对方类头文件，会导致其中一个类无法编译
+## 第4条：多用类型常量，少用#define预处理指令
+使用#define时如果有人重新定义了常量值，编译器不会发出警告，从而导致应用程序中的常量值不一致。<br>
+局部变量,在.m文件中的使用static const来定义，例如：
+ ```
+ static const NSString* testString1 = @"t1";
+ ```
+全局变量，需要.h文件中使用extern来声明，并在.m文件中实现，通常其名称需要加以隔离，通常用类名做前缀。例如：
+```
+// Person.h
+extern const NSString* PersonNameChangedNotification;
+// Person.m
+const NSString* PersonNameChangedNotification = @"PersonNameChangedNotification";
+```
