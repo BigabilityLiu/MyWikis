@@ -116,7 +116,45 @@ NS_ASSUME_NONNULL_END
     student.study();
 ```
 strongSelf的目的是因为一旦进入block执行，不允许self在这个执行过程中释放。block执行完后这个strongSelf 会自动释放，不会存在循环引用问题。但是依然需要判断strongSelf是否为空，因为strongSelf只能保证在函数内即block内不为空，不能保证外部情况。
+## Swizzling 方法替换在Objcetive-C和Swift5中的实现
+```
+// Swift5
+import UIKit
+import Foundation
+// 继承自NSObject
+class Car: NSObject{
+    let name: String
+    init(name: String) {
+        self.name = name
+    }
+    // 表明 dynamic
+    @objc dynamic func run(){
+        print(name + " running")
+    }
+    @objc func walk(){
+        print(name + " walk")
+    }
+}
 
+let mustang = Car.init(name: "Mustang")
+mustang.run()
+let m1 = class_getInstanceMethod(Car.self, #selector(mustang.run))
+let m2 = class_getInstanceMethod(Car.self, #selector(mustang.walk))
+if let m1 = m1, let m2 = m2{
+    method_exchangeImplementations(m1, m2)
+    mustang.run()
+}else{
+    print("error")
+}
+
+```
+```
+// Objcetive-C
+    Method originalTurnOn = class_getInstanceMethod(mustang.class, @selector(turnOn));
+    IMP newIMP =  class_getMethodImplementation(mustang.class, @selector(accelerate));
+    method_setImplementation(originalTurnOn, newIMP);//method_getImplementation(newTurnOn));
+    [mustang turnOn];
+```
 # Effective Objective-C 读书笔记
 ## 第2条：在类的头文件中尽量少引入其他头文件
 应该在.h文件中尽量使用`@class XXX;`引入类，在.m文件中需要用到时，再使用`#import "XXX".h` 引入头文件,原因：
