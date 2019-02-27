@@ -116,7 +116,97 @@ NS_ASSUME_NONNULL_END
     student.study();
 ```
 strongSelf的目的是因为一旦进入block执行，不允许self在这个执行过程中释放。block执行完后这个strongSelf 会自动释放，不会存在循环引用问题。但是依然需要判断strongSelf是否为空，因为strongSelf只能保证在函数内即block内不为空，不能保证外部情况。
-## Swizzling 方法替换在Objcetive-C和Swift5中的实现
+# Effective Objective-C 读书笔记
+## 第2条：在类的头文件中尽量少引入其他头文件
+应该在.h文件中尽量使用`@class XXX;`引入类，在.m文件中需要用到时，再使用`#import "XXX".h` 引入头文件,原因：
+1. 使用`#import`会引入该类中的所有内容，增加编译时间
+2. 两个类头文件中都使用`#import`引入对方类头文件，会导致其中一个类无法编译
+## 第4条：多用类型常量，少用#define预处理指令
+使用#define时如果有人重新定义了常量值，编译器不会发出警告，从而导致应用程序中的常量值不一致。<br>
+局部变量,在.m文件中的使用static const来定义，例如：
+ ```
+ static const NSString* TestString = @"TestString";
+ ```
+全局变量，需要.h文件中使用extern来声明，并在.m文件中实现，通常其名称需要加以隔离，通常用类名做前缀。例如：
+```
+// Person.h
+extern const NSString* PersonNameChangedNotification;
+// Person.m
+const NSString* PersonNameChangedNotification = @"PersonNameChangedNotification";
+```
+## 第12条: 理解消息转发机制
+##### Step1: 动态方法解析
++ （BOOL) resolveInstanceMethod:(SEL) selector
+##### Step2: 备援接收者
+- (id)forwardingTargetForSelector:(SEL)selector
+##### Step3: 完整的消息转发
+- (void)forwardInvocation:(NSInvocation*)invocation
+##### 例子
+EOCAutoDictionary.h
+```
+@interface EOCAutoDictionary : NSObject
+@property (nonatomic, strong) NSString *string;
+@property (nonatomic, strong) NSDate *date;
+@end
+```
+EOCAutoDictionary.m
+```
+#import "EOCAutoDictionary.h"
+#import <objc/runtime.h>
+
+@interface EOCAutoDictionary ()
+@property (nonatomic, strong) NSMutableDictionary* backingStore;
+
+@end
+
+@implementation EOCAutoDictionary
+
+@dynamic string, date;
+
+- (id)init{
+    if (self = [super init]) {
+        _backingStore = [NSMutableDictionary new];
+    }
+    return self;
+}
+
++ (BOOL)resolveInstanceMethod:(SEL)sel{
+    NSString *selString = NSStringFromSelector(sel);
+    if ([selString hasPrefix:@"set"]) {
+        class_addMethod(self, sel, (IMP)autoDictionarySetter, "v@:@");
+    }else{
+        class_addMethod(self, sel, (IMP)autoDictionaryGetter, "@@:");
+    }
+    return YES;
+}
+id autoDictionaryGetter(id self, SEL _cmd){
+    EOCAutoDictionary *typeSelf = (EOCAutoDictionary*)self;
+    NSMutableDictionary *backingStore = typeSelf.backingStore;
+    NSString *key = NSStringFromSelector(_cmd);
+    return [backingStore objectForKey:key];
+}
+
+void autoDictionarySetter(id self, SEL _cmd, id value){
+    EOCAutoDictionary *typeSelf = (EOCAutoDictionary*)self;
+    NSMutableDictionary *backingStore = typeSelf.backingStore;
+    NSMutableString *key = NSStringFromSelector(_cmd).mutableCopy;
+    
+    [key deleteCharactersInRange:(NSMakeRange(key.length - 1, 1))];
+    [key deleteCharactersInRange:NSMakeRange(0, 3)];
+    NSString *lowercaseFirstChar = [[key substringToIndex:1] lowercaseString];
+    [key replaceCharactersInRange:NSMakeRange(0, 1) withString:lowercaseFirstChar];
+    if (value) {
+        [backingStore setObject:value forKey:key];
+    }else{
+        [backingStore removeObjectForKey:key];
+    }
+}
+@end
+
+```
+## 第13条: 方法调配技术
+一般来说，只在调试程序时候才需要在运行期修改方法实现，不宜滥用，用多了不宜读懂且难以维护
+#### Swizzling 方法替换在Objcetive-C和Swift5中的实现
 ```
 // Swift5
 import UIKit
@@ -154,22 +244,4 @@ if let m1 = m1, let m2 = m2{
     IMP newIMP =  class_getMethodImplementation(mustang.class, @selector(accelerate));
     method_setImplementation(originalTurnOn, newIMP);//method_getImplementation(newTurnOn));
     [mustang turnOn];
-```
-# Effective Objective-C 读书笔记
-## 第2条：在类的头文件中尽量少引入其他头文件
-应该在.h文件中尽量使用`@class XXX;`引入类，在.m文件中需要用到时，再使用`#import "XXX".h` 引入头文件,原因：
-1. 使用`#import`会引入该类中的所有内容，增加编译时间
-2. 两个类头文件中都使用`#import`引入对方类头文件，会导致其中一个类无法编译
-## 第4条：多用类型常量，少用#define预处理指令
-使用#define时如果有人重新定义了常量值，编译器不会发出警告，从而导致应用程序中的常量值不一致。<br>
-局部变量,在.m文件中的使用static const来定义，例如：
- ```
- static const NSString* TestString = @"TestString";
- ```
-全局变量，需要.h文件中使用extern来声明，并在.m文件中实现，通常其名称需要加以隔离，通常用类名做前缀。例如：
-```
-// Person.h
-extern const NSString* PersonNameChangedNotification;
-// Person.m
-const NSString* PersonNameChangedNotification = @"PersonNameChangedNotification";
 ```
