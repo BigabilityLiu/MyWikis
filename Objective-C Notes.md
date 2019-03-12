@@ -4,25 +4,26 @@
 * [learnxinyminutes.com](https://learnxinyminutes.com/docs/objective-c/)
 ## [Property Attributes](https://stackoverflow.com/questions/8927727/objective-c-arc-strong-vs-retain-and-weak-vs-assign)
 ### 原子性
-* `atomic(默认)`它保证你一定可以得到一个确定的数据值，而不是一个混乱的内存空间。它保证当对一个变量进行多线程多进程的读和写操作时，也可以返回一个确定
+* `atomic(默认)`它保证你一定可以得到一个确定的数据值，而不是一个混乱的内存空间。它保证当对一个属性进行多线程多进程的读和写操作时，也可以返回一个确定
 的值，但是并不确定是修改之前或之后的值。但并<b>不要误认为它是线程安全的</b>，你需要自己用其他方式来保证线程安全，atomic只保证你读的时候，总会返回一个值。
-* `non-atomic`当你读取它的值时，如果它正在被写入修改，那你会得到一个垃圾信息。但是它的速度比atomic更快。当你经常对一个变量进行访问时，使用nonatomic会
-可以保证你的性能。当你只在一个线程中读取和修改变量时，也采用它，比如在主线程中访问UI变量。
+* `non-atomic`不使用原子锁，当你读取它的值时，如果它正在被写入修改，那你会得到一个垃圾信息。但是它的速度比atomic更快。当你经常对一个属性进行访问时，使用nonatomic会可以保证你的性能。当你只在一个线程中读取和修改属性时，也采用它，比如在主线程中访问UI属性。
 
 ### 修改权限
 * `readwrite(默认)`
-* `readonly`没有setter的实现。⚠️如果在.m文件的interface中声明一个变量为`readonly`，则在.m中的implement中不可读取，如果在.h文件的`interface`中申明为
-`readonly`,但是在.m中的interface中重写为`readwrite`，则在impement中也可以修改。
+* `readonly`没有setter的实现。⚠️如果在.m文件的interface中声明一个属性为`readonly`，则在.m中的implement中不可读取，如果在.h文件的`interface`中申明为`readonly`,但是在.m中的interface（“class-continuation分类”）中重写为`readwrite`，则在impement中也可以修改。
 
 ### 内存管理
-* `strong(默认)`表示该变量强指引到Object上，只要该变量不是nil，则该Object不能被deallocated and released。当所有的strong指引都变成nil时，
-该Object将被deallocated.
-* `weak`表示该变量弱指引到Object上，该变量是不是nil，该Object都可以释放。常用于1. UI objects, 2. delegates , 3. blocks（weakSelf 
-should be used instead of self to avoid memory cycles）
-### 
-* `assign(默认)`主要用于C语言简单类型比如int float bool；
-* `copy`常用与像string和所有可变的Object上and so on...只有实现了NSCopying协议，并且实现了其中的copyWithZone:方法的对象才能被拷贝。
-⚠️`retain(默认)`==`strong`。`weak`约等于`assign`，`assign`用于C语言基本类型，`weak`用于references to Objective-C objects.
+#### 强指引
+* `strong(默认)`为该属性设置新值时，设置方法会先保留新值，并释放旧值，然后把新值设置上。只要该属性不是nil，则该Object不能被deallocated and released。当所有的strong指引都变成nil时，该Object将被deallocated.
+* `copy` 与`strong`类似，但是设置方法并不保留新值，而是将其copy来，。常用与像NSString这样自身不可变，但含有可变子类的Object上，来保护其封装性。因为传递给设置方法的新值可能是一个NSMutableString类的实例，此时若是不拷贝字符串，那么该属性可能会在不知情情况下执行可变方法导致更改，所以此时就要拷贝一份不可变的字符串，确保该属性不会被无意间变动。
+* `retain`==`strong`。`strong`用于最新的ARC模式下，而`retain`是MRC方式下的方法。
+#### 弱指引
+* `weak`为该属性设置新值时，既不保留新值，也不释放旧值。该属性是不是nil，该Object都可以释放。常用于delegates、 blocks（weakSelf 
+should be used instead of self to avoid memory cycles），同`assign`类似。
+* `unsafe_unretained`类似`weak`用于属性（Object）类型，区别在于：当目标对象被摧毁后，`weak`属性会指向nil，而`unsafe_unretained`属性值不会被清空，依然指向被摧毁的目标属性，所以说是不安全的（unsafe）。
+#### assign
+`assign(默认)`效果与弱指引类似，主要用于纯量类型（scalar type）比如int CGFloat NSInteger；
+
 ## Blocks
 [fuckingblocksyntax.com](http://fuckingblocksyntax.com/)
 ### 示例
