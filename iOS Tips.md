@@ -187,7 +187,7 @@ func keyboardWillShow(notification: NSNotification){
     // FAILED！
     selectedDiscountIndex = @[@(1),@(3),@(4),@(5)].mutableCopy;
     // CRASH! 这里遍历@(4)之后，到@(5)会crash
-    for (NSNumber* index in selectedDiscountIndex.copy) {
+    for (NSNumber* index in selectedDiscountIndex) {
         if (index.integerValue > 3) {
             [selectedDiscountIndex removeObject: index];
         }
