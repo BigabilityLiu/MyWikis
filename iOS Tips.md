@@ -174,3 +174,24 @@ func keyboardWillShow(notification: NSNotification){
         UIView.commitAnimations()
     }
 ```
+# Objective-C Tips
+### ⚠️array has mutated while enumerating
+```
+    NSMutableArray * selectedDiscountIndex = @[@(1),@(3),@(4),@(5)].mutableCopy;
+    [selectedDiscountIndex enumerateObjectsUsingBlock:^(NSNumber*  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (obj.integerValue > 3) {
+            [selectedDiscountIndex removeObjectAtIndex:idx];
+            // 这里到@(4)之后直接跳出，不再遍历@(5)
+        }
+    }];
+    // FAILED！
+    selectedDiscountIndex = @[@(1),@(3),@(4),@(5)].mutableCopy;
+    // CRASH! 这里遍历@(4)之后，到@(5)会crash
+    for (NSNumber* index in selectedDiscountIndex.copy) {
+        if (index.integerValue > 3) {
+            [selectedDiscountIndex removeObject: index];
+        }
+    }
+    // 结论：除非只modify一次并在修改后break，才可以在遍历中修改，否则奔溃或终止便利
+    // 所以：应该遍历selectedDiscountIndex.copy
+```
