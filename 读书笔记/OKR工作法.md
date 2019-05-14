@@ -14,7 +14,7 @@ OKR需要设置有挑战的目标，我们要那种有一半的把握能达到�
 
 “OKR是用来推进事情的，我们先集中精力聚焦到一件事情上，才不至于浅尝辄止。这些状态指标也很重要，我们持续关注就行，如果所有事情都一样重要那就没有意义了。
 
-![OKR Example](https://github.com/BigabilityLiu/MyWikis/resource/OKR_example.png)
+![OKR Example](../resource/OKR_example.png)
 
 ### 矩形的右上方列出目标和关键结果，后面再标出信心指数。我们拿上个季度的价值目标为例。
 
