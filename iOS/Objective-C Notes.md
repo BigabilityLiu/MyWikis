@@ -135,6 +135,20 @@ extern const NSString* PersonNameChangedNotification;
 // Person.m
 const NSString* PersonNameChangedNotification = @"PersonNameChangedNotification";
 ```
+## 第11条: 理解objc_msgSend的作用
+在Objectve-C中，如果向某对象传递消息，那就会使用动态绑定机制来决定需要调用的方法。在底层，所有的方法都是普通的C语言函数，然后对象接收到消息之后，究竟调用哪个方法则完全于运行期决定，甚至可以在运行进行时改变，这些特性是的Objective-C成为一门真正的动态语言。给对象发送信息可以这样写：
+```
+id returnValue = [someObject messageName:parameter];
+```
+本例中，someObject叫做“接收者”，messageName叫做“选择子”。选择子与参数合起来叫“消息”。编译器看到此消息后，将其转换成一条标准的C语言函数调用，该很熟乃是消息传递机制中的核心函数，叫做objc_msgSend，其“原型”如下：
+```
+void objc_msgSeng(id self, SEL cmd, ...)
+```
+第一个参数表示接受者，第二个参数表示选择子，后续参数就是消息中的那些参数，其顺序不变。选择子指的是方法的名字。编译器会把刚才例子中的方法转换为如下的函数:
+```
+id returnValue = objc_msgSend(someObject, @selector(messageName:), parameter);
+```
+该方法需要在接收者所属的类中搜寻其“方法列表”，如果能找到与其选择子名称相符的方法，就跳至其实现代码，若找不到，就沿着继承体系继续向上查找，等找到合适的方法之后再跳转。如果最终还是找不到相府的方法，那就执行“消息转发”操作。
 ## 第12条: 理解消息转发机制
 ##### Step1: 动态方法解析
 + （BOOL) resolveInstanceMethod:(SEL) selector
