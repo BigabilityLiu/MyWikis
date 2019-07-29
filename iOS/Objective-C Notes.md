@@ -37,7 +37,7 @@ should be used instead of self to avoid memory cycles），同`assign`类似。
 
 `TableViewCell.h`
 
-```
+```objective-c
 @property (nonatomic, copy, nullable) void (^myBlock)(void);
 ```
 `TableViewCell.m`
@@ -68,7 +68,7 @@ self.myBlock();// call this block;
 
 `Model.h`
 
-```swift
+```objective-c
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -86,7 +86,7 @@ typedef void(^Study)(void);
 NS_ASSUME_NONNULL_END
 ```
 `Model.m`
-```swift
+```objective-c
 #import "Model.h"
 @implementation Student
 @end
@@ -116,14 +116,14 @@ NS_ASSUME_NONNULL_END
 
 修改如下：
 
-```
+```objective-c
     __weak __typeof(teacher) weakTeacher = teacher;
     student.study = ^{
         NSLog(@"my name is = %@",weakTeacher.name);
     };
 ```
 但在study block运行时并不能保证每次teacher都不为空，所以需要修改为以下：
-```
+```objective-c
     __weak __typeof(teacher) weakTeacher = teacher;
     student.study = ^{
         __strong __typeof(weakTeacher) strongTeacher = weakTeacher;
@@ -145,11 +145,11 @@ strongSelf的目的是因为一旦进入block执行，不允许self在这个执�
 
 局部变量,在.m文件中的使用static const来定义，例如：
 
- ```
+ ```objective-c
  static const NSString* TestString = @"TestString";
  ```
 全局变量，需要.h文件中使用extern来声明，并在.m文件中实现，通常其名称需要加以隔离，通常用类名做前缀。例如：
-```
+```objective-c
 // Person.h
 extern const NSString* PersonNameChangedNotification;
 // Person.m
@@ -211,6 +211,7 @@ Step3: 完整的消息转发（灵活的将目标函数以其他形式执行）
 
 ## 第13条: 方法调配技术
 一般来说，只在调试程序时候才需要在运行期修改方法实现，不宜滥用，用多了不宜读懂且难以维护
+
 **Swizzling 方法替换在Objcetive-C和Swift5中的实现**
 
 ```swift
@@ -244,7 +245,7 @@ if let m1 = m1, let m2 = m2{
 }
 
 ```
-```swift w
+```swift
 // Objcetive-C
     Method originalTurnOn = class_getInstanceMethod(mustang.class, @selector(turnOn));
     IMP newIMP =  class_getMethodImplementation(mustang.class, @selector(accelerate));
@@ -252,3 +253,96 @@ if let m1 = m1, let m2 = m2{
     [mustang turnOn];
 ```
 
+## 第41条: 多用派发队列，少用同步锁
+
+如果要多个线程执行同一份代码，有时会出问题，通常情况下要用锁来实现某种同步机制。
+
+**方法一：同步块 synchronization block**
+
+```objective-c
+- (void)synchronizedMethod{
+  @synchronized(self) {
+    // Safe code
+  }
+}
+```
+
+它可以保证每个对象实例都不受干扰的运行synchronizedMethod，然而如果滥用@synchronized(self) 则会降低代码效率，因为共用用一个锁的那些同步块，都必须按照顺序执行。若是在self对象上频繁加锁，那么程序可能要等另一段与此无关的代码执行完，才能继续执行当前代码。
+
+属性就是做成**原子的atomic**修饰就可以做到,但是不能说是线程安全的。
+
+方法二： NSLock对象
+
+```objective-c
+_lock = [[NSLock alloc] init];
+- (void)synchronizedMethod{
+	[_lock lock];
+	// Safe code
+  [_lock unlock];
+  }
+}
+```
+
+**缺陷：**极端情况下会导致死锁，另外效率也不高。
+
+**代替方案：使用GCD “串行同步队列”** serial synchronization queue ，get和set方法都在一个队列中，即可保证数据同步。
+
+```objective-c
+_syncQueue = dispatch_queue_create("com.xxx.syncqueue", NULL);
+- (NSString*)someString{
+  	__block NSString* localSomeString;
+  	dispatch_sync(_syncQueue, ^{
+				localSomeString = _someString;
+  	});
+    return localSomeString;
+}
+- (void)setSomeString:(NSString*)someString{
+  	dispatch_sync(_syncQueue, ^{
+      	_someString = someString;
+    });
+}
+```
+
+set方法和get方法都安排在序列化的队列中执行，所有针对属性的访问操作就都同步了。
+
+**进一步优化：把set方法同步派发改为异步派发**。set方法并不一定非要是同步的。因为set方法并不用返回值，所以set方法可以改成如下：
+
+```objective-c
+- (void)setSomeString:(NSString*)someString{
+  	dispatch_async(_syncQueue, ^{
+      	_someString = someString;
+    });
+}
+```
+
+弊端：因为执行异步派发时需要拷贝块，如果拷贝块所用的时间超过执行块所用的时间，则会比原来更慢。
+
+**并发队列：** 并行执行多个get方法，而get方法和set方法之间不能并发执行。
+
+```objective-c
+_syncQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+- (NSString*)someString{
+  	__block NSString* localSomeString;
+  	dispatch_sync(_syncQueue, ^{
+				localSomeString = _someString;
+  	});
+    return localSomeString;
+}
+- (void)setSomeString:(NSString*)someString{
+  	dispatch_sync(_syncQueue, ^{
+      	_someString = someString;
+    });
+}
+```
+
+使用栅栏barrier让set方法单独执行
+
+```objective-c
+- (void)setSomeString:(NSString*)someString{
+  	dispatch_barrier_async(_syncQueue, ^{
+      	_someString = someString;
+    });
+}
+```
+
+![](/Users/liuxudong/Documents/GitHub/MyWikis/resource/oc_1.png)

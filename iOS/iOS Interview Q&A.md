@@ -83,7 +83,9 @@ Objective-C 是一个动态语言，这意味着它不仅需要一个编译器�
 #### [属性](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C Notes.md#property-attributes)
 
 ## 多线程
-#### 如何实现一个文件（属性）的多线程读，单线程写
+##### [同步锁:如何实现一个文件（属性）的多线程读，单线程写](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C Notes.md#第41条-多用派发队列，少用同步锁)
+
+
 
 ## 实践
 
