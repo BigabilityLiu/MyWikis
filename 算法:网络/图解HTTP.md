@@ -10,11 +10,42 @@ TCP/IP 协议族按层次分别分为以下 4 层：应用层、传输层、网�
 
 #### 应用层
 
-TCP/IP 协议族内预存了各类通用的**应用服务**。比如，FTP（FileTransfer Protocol，文件传输协议）和 DNS（Domain Name System，域名系统）服务就是其中两类。HTTP 协议也处于该层。
+TCP/IP 协议族内预存了各类通用的**应用服务**。详细的举例请看传输层
 
 #### 传输层
 
 传输层对上层应用层，提供处于网络连接中的两台计算机之间的数据传输。在传输层有两个性质不同的协议：**TCP**（Transmission ControlProtocol，传输控制协议）和 **UDP**（User Data Protocol，用户数据报协议）。
+
+**TCP与UDP的区别：**
+
+1. 建立连接通道与无连接；
+2. 对系统资源的要求（TCP数据较多，UDP少）；
+3. 流模式与数据报模式 ；
+4. TCP保证数据正确性，UDP可能丢包；
+5. TCP保证数据顺序，UDP不保证。
+6. TCP慢，UDP快
+
+**运行在TCP协议上的协议：**
+- **HTTP**（Hypertext Transfer Protocol，超文本传输协议），主要用于普通浏览。
+- HTTPS（Hypertext Transfer Protocol over Secure Socket Layer, or HTTP over SSL，安全超文本传输协议）,HTTP协议的安全版本。
+- FTP（File Transfer Protocol，文件传输协议），由名知义，用于文件传输。
+- POP3（Post Office Protocol, version 3，邮局协议），收邮件用。
+- SMTP（Simple Mail Transfer Protocol，简单邮件传输协议），用来发送电子邮件。
+- TELNET（Teletype over the Network，网络电传），通过一个终端（terminal）登陆到网络。
+- SSH（Secure Shell，用于替代安全性差的TELNET），用于加密安全登陆用。
+
+**运行在UDP协议上的协议：**
+
+- BOOTP（Boot Protocol，启动协议），应用于无盘设备。
+- NTP（Network Time Protocol，网络时间协议），用于网络同步。
+- DHCP（Dynamic Host Configuration Protocol，动态主机配置协议），动态配置IP地址。
+
+**其他：**
+
+- DNS（Domain Name Service，域名服务），用于完成地址查找，邮件转发等工作（运行在TCP和UDP协议上）。
+- ARP（Address Resolution Protocol，地址解析协议），用于动态解析以太网硬件的地址。根据通信方的 IP 地址就可以反查出对应的 MAC 地址。
+- ECHO（Echo Protocol，回绕协议），用于查错及测量应答时间（运行在TCP和UDP协议上）。
+- SNMP（Simple Network Management Protocol，简单网络管理协议），用于网络信息的收集和网络管理。
 
 #### 网络层
 
@@ -59,17 +90,25 @@ Resolution Protocol）。ARP 是一种用以解析地址的协议，根据通信
 
 为了准确无误地将数据送达目标处，TCP 协议采用了**三次握手**（three-way handshaking）策略。握手过程中使用了 TCP 的标志（flag） —— SYN（synchronize）和ACK（acknowledgement）。
 
-1. 发送端首先发送一个带 SYN 标志的数据包给对方。
+1. A —> B发送端首先发送一个带 SYN 标志的数据包给对方。
 
-2. 接收端收到后，回传一个带有 SYN/ACK 标志的数据包以示传达确认信息。
+2. B —> A 接收端收到后，回传一个带有 SYN/ACK 标志的数据包以示传达确认信息。
 
-3. 最后，发送端再回传一个带 ACK 标志的数据包，代表“握手”结束。若在握手过程中某个阶段莫名中断，TCP 协议会再次以相同的顺序发
+3. A —> B最后，发送端再回传一个带 ACK 标志的数据包，代表“握手”结束。若在握手过程中某个阶段莫名中断，TCP 协议会再次以相同的顺序发
 
 ![http/1_4_1_1.png](../resource/http/1_4_2_1.png)
 
+TCP建立连接要进行3次握手,而**断开连接要进行4次**
+
+1. A —> B 当发送端完成数据传输后,将控制位FIN置1,提出停止TCP连接的请求
+2. B —> A 接收端收到FIN后对其作出响应,确认这一方向上的TCP连接将关闭,将ACK置1
+3. B —> A 接收端再提出反方向的关闭请求,将FIN置1
+4. A —> B 发送端对主机B的请求进行确认,将ACK置1,双方向的关闭结束.
+  
+
 ## 1.5 负责域名解析的  DNS 服务
 
-DNS（Domain Name System）服务是和 HTTP 协议一样位于应用层的协议。它提供域名到 IP 地址之间的解析服务。DNS 协议提供通过域名查找 IP 地址，或逆向从 IP 地址反查域名的服务。
+DNS（Domain Name System）服务是和 HTTP 协议一样位于**应用层的协议**。它提供域名到 IP 地址之间的解析服务。DNS 协议提供通过域名查找 IP 地址，或逆向从 IP 地址反查域名的服务。
 
 ## 1.6 各种协议与  HTTP 协议的关系
 
