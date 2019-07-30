@@ -26,8 +26,9 @@
 should be used instead of self to avoid memory cycles），同`assign`类似。
 * `unsafe_unretained`类似`weak`用于属性（Object）类型
 * `assign(默认)`效果与弱指引类似，主要用于纯量类型（scalar type）比如int CGFloat NSInteger；
-也可以用于Object类型，
-**区别在于** 当目标对象被摧毁后，`weak`属性会指向nil，而`unsafe_unretained`和`assign`属性值不会被清空，依然指向被摧毁的目标属性，所以说是不安全的（unsafe）。
+也可以用于Object类型
+
+**区别在于** 当目标对象被摧毁后，`weak`属性会指向nil，而`unsafe_unretained`和`assign`属性值不会被清空，依然指向被摧毁的目标属性，造成野指针，所以说是不安全的。
 
 ## Blocks
 使用方法[fuckingblocksyntax.com](http://fuckingblocksyntax.com/)
