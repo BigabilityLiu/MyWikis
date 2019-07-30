@@ -66,9 +66,9 @@ Objective-C 是一个动态语言，这意味着它不仅需要一个编译器�
 - 实现NSCoding的自动归档和自动解档
 - 实现字典和模型的自动转换(MJExtension)
 
-#### [消息传递/转发机制](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C Notes.md#第11条-理解objc_msgsend的作用)
+#### [消息传递/转发机制](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C%20Notes.md#%E7%AC%AC11%E6%9D%A1-%E7%90%86%E8%A7%A3objc_msgsend%E7%9A%84%E4%BD%9C%E7%94%A8%E6%B6%88%E6%81%AF%E4%BC%A0%E9%80%92%E6%9C%BA%E5%88%B6)
 
-#### [crash之前，有什么办法可以阻止预防](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C Notes.md#在crash之前，阻止预防)
+#### [crash之前，有什么办法可以阻止预防](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C%20Notes.md#%E5%9C%A8crash%E4%B9%8B%E5%89%8D%E9%98%BB%E6%AD%A2%E9%A2%84%E9%98%B2)
 
 **SEL：**类成员方法的指针，方法编号
 
@@ -80,12 +80,10 @@ Objective-C 是一个动态语言，这意味着它不仅需要一个编译器�
 
 在对象的生命周期中自动添加retain、release、autorelease等操作。
 
-#### [属性](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C Notes.md#property-attributes)
+#### [属性](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C%20Notes.md#property-attributes)
 
 ## 多线程
-##### [同步锁:如何实现一个文件（属性）的多线程读，单线程写](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C Notes.md#第41条-多用派发队列，少用同步锁)
-
-
+##### [同步锁:如何实现一个文件（属性）的多线程读，单线程写](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C%20Notes.md#%E7%AC%AC41%E6%9D%A1-%E5%A4%9A%E7%94%A8%E6%B4%BE%E5%8F%91%E9%98%9F%E5%88%97%E5%B0%91%E7%94%A8%E5%90%8C%E6%AD%A5%E9%94%81)
 
 ## 实践
 
