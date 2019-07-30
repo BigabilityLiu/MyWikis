@@ -189,7 +189,7 @@ Step3: 完整的消息转发（灵活的将目标函数以其他形式执行）
 (void)forwardInvocation:(NSInvocation*)invocation
 ```
 
-**在crash之前，阻止预防**
+#### 在crash之前，阻止预防
 
 在经过上述的消息传递和转发后，如果都不中，调用doesNotRecognizeSelector抛出异常。
 
