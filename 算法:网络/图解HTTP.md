@@ -192,17 +192,17 @@ CONNECT 方法要求在与代理服务器通信时建立隧道，实现用隧道
 
 HTTP 协议的初始版本中，每进行一次 HTTP 通信就要断开一次 TCP连接。
 
-![](/Users/liuxudong/Documents/GitHub/MyWikis/resource/http/2_7_1.png)
+![](../resource/http/2_7_1.png)
 
 以当年的通信情况来说，因为都是些容量很小的文本传输，所以即使这样也没有多大问题。可随着 HTTP 的普及，文档中包含大量图片的情况多了起来。因此，每次的请求都会造成无谓的 TCP 连接建立和断开，增加通信量的开销。
 
-![](/Users/liuxudong/Documents/GitHub/MyWikis/resource/http/2_7_2.png)
+![](../resource/http/2_7_2.png)
 
 ### 持久连接
 
 为解决上述 TCP 连接的问题，HTTP/1.1 和一部分的 HTTP/1.0 想出了持久连接（HTTP Persistent Connections，也称为 HTTP keep-alive 或HTTP connection reuse）的方法。持久连接的特点是，只要任意一端没有明确提出断开连接，则保持 TCP 连接状态。
 
-![](/Users/liuxudong/Documents/GitHub/MyWikis/resource/http/2_7_3.png)
+![](../resource/http/2_7_3.png)
 
 图：持久连接旨在建立   1 次 TCP 连接后进行多次请求和响应的交互
 
@@ -217,7 +217,7 @@ HTTP 协议的初始版本中，每进行一次 HTTP 通信就要断开一次 TC
 
 比如，当请求一个包含 10 张图片的 HTML Web 页面，与挨个连接相比，用持久连接可以让请求更快结束。而管线化技术则比持久连接还要快。请求数越多，时间差就越明显。
 
-![](/Users/liuxudong/Documents/GitHub/MyWikis/resource/http/2_7_4.png)
+![](../resource/http/2_7_4.png)
 
 ## 2.8　使用 Cookie 的状态管理
 
@@ -280,13 +280,13 @@ HTTPS 并非是应用层的一种新协议。只是 HTTP **通信接口部分**�
 
 通常，HTTP 直接和 TCP 通信。当使用 SSL 时，则演变成先和 SSL 通信，再由 SSL 和 TCP 通信了。简言之，所谓 HTTPS，其实就是身披SSL 协议这层外壳的 HTTP。
 
-![](/Users/liuxudong/Documents/GitHub/MyWikis/resource/http/7_2_1.png)
+![](../resource/http/7_2_1.png)
 
 SSL 是独立于 HTTP 的协议，所以不光是 HTTP 协议，其他运行在应用层的 SMTP 和 Telnet 等协议均可配合 SSL 协议使用。可以说 SSL 是当今世界上应用最为广泛的网络安全技术。
 
 ### HTTPS的安全通信机制
 
-![](/Users/liuxudong/Documents/GitHub/MyWikis/resource/http/7_2_2.png)
+![](../resource/http/7_2_2.png)
 
 步骤 1：客户端通过发送 Client Hello 报文开始 SSL 通信。报文中包含客户端支持的 SSL 的指定版本、加密组件（Cipher Suite）列表（所使用的加密算法及密钥长度等）。
 
@@ -314,7 +314,7 @@ SSL 是独立于 HTTP 的协议，所以不光是 HTTP 协议，其他运行在�
 
 下面是对整个流程的图解。图中说明了从仅使用服务器端的公开密钥证书（服务器证书）建立 HTTPS 通信的整个过程。
 
-![](/Users/liuxudong/Documents/GitHub/MyWikis/resource/http/7_2_3.png)
+![](../resource/http/7_2_3.png)
 
 **SSL 和 TLS**
 
