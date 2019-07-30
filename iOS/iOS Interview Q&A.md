@@ -83,6 +83,16 @@ Objective-C 是一个动态语言，这意味着它不仅需要一个编译器�
 #### [属性](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C%20Notes.md#property-attributes)
 
 ## 多线程
+我们用串行并行描述队列。这就是在描述，该队列里面的所有任务，相互之间在同一时刻，是怎样的运行关系。是指队列内本身的任务运行顺序。
+* serial（串行） 某一时刻，只执行一个任务
+* concurrent（并行） 可以同时执行多个任务
+
+侧重描述一个函数的执行完成，对其他任务的影响 (既是否任务在等待某个函数完成，然后才可以运行)：
+
+* synchronous（同步） 任务执行完成后reture，（阻塞）
+* asynchronous（异步） 不等待任务执行完成，立即reture，（不阻塞当前）
+我们还用同步异步，描述某一个任务。比如说任务A是同步执行的。这就是在说，A任务，会阻塞当前任务，直到A结束。这是指不同任务之间的关系，与队列无关，可以是不同队列，也可以是相同队列。
+
 ##### [同步锁:如何实现一个文件（属性）的多线程读，单线程写](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C%20Notes.md#%E7%AC%AC41%E6%9D%A1-%E5%A4%9A%E7%94%A8%E6%B4%BE%E5%8F%91%E9%98%9F%E5%88%97%E5%B0%91%E7%94%A8%E5%90%8C%E6%AD%A5%E9%94%81)
 
 ## 实践
