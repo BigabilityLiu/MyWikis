@@ -84,6 +84,9 @@ func reverse(_ x: Int) -> Int {
 #### 答案
 ```swift
     func climbStairs(_ n: Int) -> Int {
+        if n<3 {
+            return n
+        }
         var array = Array.init(repeating: 0, count: n + 1)
         array[0] = 0
         array[1] = 1
