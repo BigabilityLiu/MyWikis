@@ -82,6 +82,11 @@ Objective-C 是一个动态语言，这意味着它不仅需要一个编译器�
 
 #### [属性](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C%20Notes.md#property-attributes)
 
+#### AutoreleasePool 
+* 自动释放池是由 AutoreleasePoolPage 以双向链表的方式实现的
+* 当对象调用 autorelease 方法时，会将对象加入 AutoreleasePoolPage 的栈中
+* 调用 AutoreleasePoolPage::pop 方法会向栈中的对象发送 release 消息
+
 ## 多线程
 我们用串行并行描述队列。这就是在描述，该队列里面的所有任务，相互之间在同一时刻，是怎样的运行关系。是指队列内本身的任务运行顺序。
 * serial（串行） 某一时刻，只执行一个任务
