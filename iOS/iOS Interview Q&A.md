@@ -128,6 +128,8 @@ UIApplicationMain 函数是整个 app 的入口,它自己会创建一个 main ru
 
 ##### [同步锁:如何实现一个文件（属性）的多线程读，单线程写](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C%20Notes.md#%E7%AC%AC41%E6%9D%A1-%E5%A4%9A%E7%94%A8%E6%B4%BE%E5%8F%91%E9%98%9F%E5%88%97%E5%B0%91%E7%94%A8%E5%90%8C%E6%AD%A5%E9%94%81)
 
+## [git-flow](https://www.git-tower.com/learn/git/ebook/cn/command-line/advanced-topics/git-flow)
+
 ## 实践
 #### 开发经历中，遇到了什么最难解决的问题，然后怎么克服了
 
