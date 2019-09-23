@@ -137,6 +137,36 @@ UIApplicationMain 函数是整个 app 的入口,它自己会创建一个 main ru
 
 #### tableViewCell里有大图片，怎样处理将网络请求降到最低，效率提升到最高
 
+#### UIImageView高性能添加圆角
+1.最简单的图片圆角设置:
+```
+self.imageView.layer.cornerRadius=50;
+self.imageView.layer.masksToBounds=YES;
+```
+2.设置Rasterize栅格化处理，会将图片放在缓存区，不会不断的进行图片渲染:
+```
+self.imageView.layer.cornerRadius=50;
+self.imageView.clipsToBounds=YES;
+self.imageView.layer.shouldRasterize = YES;
+self.imageView.layer.rasterizationScale=[UIScreen mainScreen].scale;
+```
+3. Core Graphic 绘制圆角图片（推荐）
+```
+UIGraphicsBeginImageContextWithOptions(self.imageView.bounds.size, NO, [UIScreen mainScreen].scale);
+// UIBezierPath贝塞尔曲线绘制裁剪出一个圆形
+[[UIBezierPath bezierPathWithRoundedRect:self.imageView.bounds
+                            cornerRadius:50] addClip];
+//图片在设置的圆形里面进行绘制
+[[UIImage imageNamed:@"FlyElephant.jpg"] drawInRect:self.imageView.bounds];
+//获取图片
+self.imageView.image = UIGraphicsGetImageFromCurrentImageContext();
+//结束绘制
+UIGraphicsEndImageContext();
+```
+####  UIView和CALayer
+* UIView接受并处理事件
+* Layer提供内容的绘制和显示
+
 # [网络](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md)
 ##### [TCP与UDP区别](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md#%E4%BC%A0%E8%BE%93%E5%B1%82)
 ##### [用户在浏览器输入一个地址后，发生了什么](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md#16-%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AE%E4%B8%8E--http-%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%85%B3%E7%B3%BB)
