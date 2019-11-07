@@ -19,12 +19,14 @@
 
 * `strong(默认)`为该属性设置新值时，设置方法会先retain保留新值，并release释放旧值，然后把新值设置上。只要该属性不是nil，则该Object不能被deallocated and released。当所有的strong指引都变成nil时，该Object将被deallocated.
 * `copy` 与`strong`类似，但是设置方法并不保留新值，而是将其copy来，。常用与像NSString这样自身不可变，但含有可变子类的Object上，来保护其封装性。因为传递给设置方法的新值可能是一个NSMutableString类的实例，此时若是不拷贝字符串，那么该属性可能会在不知情情况下执行可变方法导致更改，所以此时就要拷贝一份不可变的字符串，确保该属性不会被无意间变动。
-* `retain`==`strong`。`strong`用于最新的ARC模式下，而`retain`是MRC方式下的方法。
+* `retain`==`strong`。`strong`用于最新的ARC模式下，而`retain`是MRC方式下的方法。<br>
+<b>blocks为什么要是用copy</b>(weakSelf should be used instead of self to avoid memory cycles) ?<br>
+苹果文档说：“Note: You should specify copy as the property attribute, because a block needs to be copied to keep track of its captured state outside of the original scope. This isn’t something you need to worry about when using Automatic Reference Counting, as it will happen automatically, but it’s best practice for the property attribute to show the resultant behavior. For more information, see Blocks Programming Topics.”<br>
+解释：“block默认是创建在栈上，意味着它们只存在于它们被创建的空间里。为了以后你可以在其他地方使用它，它们必须被拷贝到堆上。在ARC中，当block在创建空间的其他地方被使用时，会被自动拷贝。实际中我们习惯显性写出copy”<br>
 
 **弱指引**
 
-* `weak`为该属性设置新值时，既不保留新值，也不释放旧值。该属性是不是nil，该Object都可以释放。常用于delegates、 blocks（weakSelf 
-should be used instead of self to avoid memory cycles），同`assign`类似。
+* `weak`为该属性设置新值时，既不保留新值，也不释放旧值。该属性是不是nil，该Object都可以释放。常用于delegates，同`assign`类似。
 * `unsafe_unretained`类似`weak`用于属性（Object）类型
 * `assign(默认)`效果与弱指引类似，主要用于纯量类型（scalar type）比如int CGFloat NSInteger；
 也可以用于Object类型
