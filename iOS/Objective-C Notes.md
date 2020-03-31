@@ -5,9 +5,10 @@
 ## [Property Attributes](https://stackoverflow.com/questions/8927727/objective-c-arc-strong-vs-retain-and-weak-vs-assign)
 **原子性**
 
-* `atomic(默认)`它保证你一定可以得到一个确定的数据值，而不是一个混乱的内存空间。它保证当对一个属性进行多线程多进程的读和写操作时，也可以返回一个确定
-的值，但是并不确定是修改之前或之后的值。但并<b>不要误认为它是线程安全的</b>，你需要自己用其他方式来保证线程安全，atomic只保证你读的时候，总会返回一个值。
-* `non-atomic`不使用原子锁，当你读取它的值时，如果它正在被写入修改，那你会得到一个垃圾信息。但是它的速度比atomic更快。当你经常对一个属性进行访问时，使用nonatomic会可以保证你的性能。当你只在一个线程中读取和修改属性时，也采用它，比如在主线程中访问UI属性。
+* `atomic(默认)`系统生成的getter/setter方法会进行加锁操作。它保证当对一个属性进行多线程多进程的读和写操作时，也可以返回一个确定的值，但是并不确定是修改之前或之后的值。但并<b>不要误认为它是线程安全的</b>，
+当几个线程同时调用同一属性的setter、getter方法时,会get到一个完整的值,但get到的值不可控.<br>
+例如:线程1调用getter，线程2 调用setter，线程3 调用setter。这3个线程并行同时开始,线程1会get到一个值,但是这个值不可控,可能是线程2,线程3 set之前的原始值,可能是线程2 set的值,也可能是线程3 set的值
+* `non-atomic` 系统生成的getter/setter方法没有加锁 线程不安全。当你读取它的值时，如果它正在被写入修改，那你会得到一个垃圾信息。但是它的速度比atomic更快。当你经常对一个属性进行访问时，使用nonatomic会可以保证你的性能。当你只在一个线程中读取和修改属性时，也采用它，比如在主线程中访问UI属性。
 
 **修改权限**
 
@@ -18,17 +19,19 @@
 
 * `strong(默认)`为该属性设置新值时，设置方法会先retain保留新值，并release释放旧值，然后把新值设置上。只要该属性不是nil，则该Object不能被deallocated and released。当所有的strong指引都变成nil时，该Object将被deallocated.
 * `copy` 与`strong`类似，但是设置方法并不保留新值，而是将其copy来，。常用与像NSString这样自身不可变，但含有可变子类的Object上，来保护其封装性。因为传递给设置方法的新值可能是一个NSMutableString类的实例，此时若是不拷贝字符串，那么该属性可能会在不知情情况下执行可变方法导致更改，所以此时就要拷贝一份不可变的字符串，确保该属性不会被无意间变动。
-* `retain`==`strong`。`strong`用于最新的ARC模式下，而`retain`是MRC方式下的方法。
+* `retain`==`strong`。`strong`用于最新的ARC模式下，而`retain`是MRC方式下的方法。<br>
+<b>blocks为什么要是用copy</b>(weakSelf should be used instead of self to avoid memory cycles) ?<br>
+苹果文档说：“Note: You should specify copy as the property attribute, because a block needs to be copied to keep track of its captured state outside of the original scope. This isn’t something you need to worry about when using Automatic Reference Counting, as it will happen automatically, but it’s best practice for the property attribute to show the resultant behavior. For more information, see Blocks Programming Topics.”<br>
+解释：“block默认是创建在栈上，意味着它们只存在于它们被创建的空间里。为了以后你可以在其他地方使用它，它们必须被拷贝到堆上。在ARC中，当block在创建空间的其他地方被使用时，会被自动拷贝。实际中我们习惯显性写出copy”<br>
 
 **弱指引**
 
-* `weak`为该属性设置新值时，既不保留新值，也不释放旧值。该属性是不是nil，该Object都可以释放。常用于delegates、 blocks（weakSelf 
-should be used instead of self to avoid memory cycles），同`assign`类似。
-* `unsafe_unretained`类似`weak`用于属性（Object）类型，区别在于：当目标对象被摧毁后，`weak`属性会指向nil，而`unsafe_unretained`属性值不会被清空，依然指向被摧毁的目标属性，所以说是不安全的（unsafe）。
+* `weak`为该属性设置新值时，既不保留新值，也不释放旧值。该属性是不是nil，该Object都可以释放。常用于delegates，同`assign`类似。
+* `unsafe_unretained`类似`weak`用于属性（Object）类型
+* `assign(默认)`效果与弱指引类似，主要用于纯量类型（scalar type）比如int CGFloat NSInteger；
+也可以用于Object类型
 
-**assign**
-
-`assign(默认)`效果与弱指引类似，主要用于纯量类型（scalar type）比如int CGFloat NSInteger；
+**区别在于** 当目标对象被摧毁后，`weak`属性会指向nil，而`unsafe_unretained`和`assign`属性值不会被清空，依然指向被摧毁的目标属性，造成野指针，所以说是不安全的。
 
 ## Blocks
 使用方法[fuckingblocksyntax.com](http://fuckingblocksyntax.com/)

@@ -59,7 +59,46 @@ func reverse(_ x: Int) -> Int {
     return result
 }
 ```
+### [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
+#### 重点
+动态规划
+#### 题目描述
+假设你正在爬楼梯。需要 n 阶你才能到达楼顶。
+每次你可以爬 1 或 2 个台阶。你有多少种不同的方法可以爬到楼顶呢？
+注意：给定 n 是一个正整数。
 
+示例 1：
+输入： 2
+输出： 2
+解释： 有两种方法可以爬到楼顶。
+1.  1 阶 + 1 阶
+2.  2 阶
+示例 2：
+
+输入： 3
+输出： 3
+解释： 有三种方法可以爬到楼顶。
+1.  1 阶 + 1 阶 + 1 阶
+2.  1 阶 + 2 阶
+3.  2 阶 + 1 阶
+#### 答案
+```swift
+    func climbStairs(_ n: Int) -> Int {
+        if n<3 {
+            return n
+        }
+        var array = Array.init(repeating: 0, count: n + 1)
+        array[0] = 0
+        array[1] = 1
+        array[2] = 2
+        if n > 2{
+            for i in 3...n {
+                array[i] = array[i - 1] + array[i - 2]
+            }
+        }
+        return array[n]
+    }
+```
 
 
 
