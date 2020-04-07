@@ -102,6 +102,7 @@ Objective-C 是一个动态语言，这意味着它不仅需要一个编译器�
 #### 用处
 Cocoa Touch 的 Runloop 中，每个 runloop circle 中系统都自动加入了 Autorelease Pool 的创建和释放。
 当我们需要创建和销毁大量的对象时，使用手动创建的 autoreleasepool 可以有效的避免内存峰值的出现。因为如果不手动创建的话，外层系统创建的 pool 会在整个 runloop circle 结束之后才进行 drain，手动创建的话，会在 block 结束之后就进行 drain 操作。例子：
+
 ```swift
 for (int i = 0; i < 100000000; i++)
 {
@@ -114,7 +115,7 @@ for (int i = 0; i < 100000000; i++)
 ```
 如果不使用 autoreleasepool ，需要在循环结束之后释放 100000000 个字符串，如果 使用的话，则会在每次循环结束的时候都进行 release 操作。
 ####  Autorelease Pool 进行 Drain 的时机
-系统在 runloop 中创建的 autoreleaspool 会在** runloop一个event ** 结束时进行释放操作。我们手动创建的 autoreleasepool 会在 ** block 执行完成之后
+系统在 runloop 中创建的 autoreleaspool 会在**runloop一个event** 结束时进行释放操作。我们手动创建的 autoreleasepool 会在 **block 执行完成**之后
 进行 drain 操作。需要注意的是：
 
 * 当 block 以异常（exception）结束时，pool 不会被 drain
@@ -125,7 +126,7 @@ UIApplicationMain 函数是整个 app 的入口,它自己会创建一个 main ru
 1. main.m 中的 UIApplicationMain 永远不会返回，只有在系统 kill 掉整个 app 时，系统会把应用占用的内存全部释放出来。
 2. 因为(1)， UIApplicationMain 永远不会返回，这里的 autorelease pool 也就永远不会进入到释放那个阶段
 3. 在 (2) 的基础上，假设有些变量真的进入了 main.m 里面这个 pool（没有被更内层的 pool 捕获），那么这些变量实际上就是被泄露的。这个 autorelease pool 等于是把这种泄露情况给隐藏起来了。
-4. UIApplication 自己会创建 main runloop，在 Cocoa 的 runloop 中实际上也是自动包含 autorelease pool 的，** 因此 main.m 当中的 pool 可以认为是没有必要的。 ** 
+4. UIApplication 自己会创建 main runloop，在 Cocoa 的 runloop 中实际上也是自动包含 autorelease pool 的，**因此 main.m 当中的 pool 可以认为是没有必要的。** 
 
 ## 多线程
 我们用串行并行描述队列。这就是在描述，该队列里面的所有任务，相互之间在同一时刻，是怎样的运行关系。是指队列内本身的任务运行顺序。
@@ -155,14 +156,20 @@ UIApplicationMain 函数是整个 app 的入口,它自己会创建一个 main ru
 self.imageView.layer.cornerRadius=50;
 self.imageView.layer.masksToBounds=YES;
 ```
-2.设置Rasterize栅格化处理，会将图片放在缓存区，不会不断的进行图片渲染:
+2.设置Rasterize光栅化处理
 ```
 self.imageView.layer.cornerRadius=50;
 self.imageView.clipsToBounds=YES;
 self.imageView.layer.shouldRasterize = YES;
 self.imageView.layer.rasterizationScale=[UIScreen mainScreen].scale;
 ```
-3. Core Graphic 绘制圆角图片（推荐）
+* 启用shouldRasterize可改善离屏渲染（指的是GPU在当前屏幕缓冲区以外新开辟一个缓冲区进行渲染操作。）
+* 由于启用shouldRasterize得到的图像会被缓存起来。会将图层Layer不同位图合并成一张位图放在缓存区，不会不断的进行图片渲染。这大大减少了GPU的负担。
+* 
+如果有很多的子图层或者有复杂的效果应用，开启shouldRasterize就会比重绘所有事务的所有帧划得来得多。
+* 但是光栅化原始图像需要时间，而且还会消耗额外的内存。如果layer内容经常发生变化，会导致多次光栅化合成，浪费更多性能。所以需要根据实际情况取舍。
+
+3. Core Graphic 绘制圆角图片（推荐）。
 ```
 UIGraphicsBeginImageContextWithOptions(self.imageView.bounds.size, NO, [UIScreen mainScreen].scale);
 // UIBezierPath贝塞尔曲线绘制裁剪出一个圆形
