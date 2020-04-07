@@ -6,8 +6,10 @@
 **原子性**
 
 * `atomic(默认)`系统生成的getter/setter方法会进行加锁操作。它保证当对一个属性进行多线程多进程的读和写操作时，也可以返回一个确定的值，但是并不确定是修改之前或之后的值。但并<b>不要误认为它是线程安全的</b>，
-当几个线程同时调用同一属性的setter、getter方法时,会get到一个完整的值,但get到的值不可控.<br>
-例如:线程1调用getter，线程2 调用setter，线程3 调用setter。这3个线程并行同时开始,线程1会get到一个值,但是这个值不可控,可能是线程2,线程3 set之前的原始值,可能是线程2 set的值,也可能是线程3 set的值
+  当几个线程同时调用同一属性的setter、getter方法时,会get到一个完整的值,但get到的值不可控.
+
+  例如:线程1调用getter，线程2 调用setter，线程3 调用setter。这3个线程并行同时开始,线程1会get到一个值,但是这个值不可控,可能是线程2,线程3 set之前的原始值,可能是线程2 set的值,也可能是线程3 set的值
+
 * `non-atomic` 系统生成的getter/setter方法没有加锁 线程不安全。当你读取它的值时，如果它正在被写入修改，那你会得到一个垃圾信息。但是它的速度比atomic更快。当你经常对一个属性进行访问时，使用nonatomic会可以保证你的性能。当你只在一个线程中读取和修改属性时，也采用它，比如在主线程中访问UI属性。
 
 **修改权限**
@@ -17,12 +19,12 @@
 
 **强指引**
 
-* `strong(默认)`为该属性设置新值时，设置方法会先retain保留新值，并release释放旧值，然后把新值设置上。只要该属性不是nil，则该Object不能被deallocated and released。当所有的strong指引都变成nil时，该Object将被deallocated.
-* `copy` 与`strong`类似，但是设置方法并不保留新值，而是将其copy来，。常用与像NSString这样自身不可变，但含有可变子类的Object上，来保护其封装性。因为传递给设置方法的新值可能是一个NSMutableString类的实例，此时若是不拷贝字符串，那么该属性可能会在不知情情况下执行可变方法导致更改，所以此时就要拷贝一份不可变的字符串，确保该属性不会被无意间变动。
+* `strong(默认)`为该Object的属性设置新值时，设置方法会先retain保留新值，并release释放旧值，然后把新值设置上。当此Object变为nil，且无其他Object strong指引此属性时，此属性会被deallocated and released。同理，当所有的strong指引于此Object都变成nil时，该Object将被deallocated.
+* `copy` 与`strong`类似，但是设置方法并不保留新值，而是将其copy来。常用与像NSString这样自身不可变，但含有可变子类的Object上，来保护其封装性。因为传递给设置方法的新值可能是一个NSMutableString类的实例，此时若是不拷贝字符串，那么该属性可能会在不知情情况下执行可变方法导致更改，所以此时就要拷贝一份不可变的字符串，确保该属性不会被无意间变动。
 * `retain`==`strong`。`strong`用于最新的ARC模式下，而`retain`是MRC方式下的方法。<br>
 <b>blocks为什么要是用copy</b>(weakSelf should be used instead of self to avoid memory cycles) ?<br>
 苹果文档说：“Note: You should specify copy as the property attribute, because a block needs to be copied to keep track of its captured state outside of the original scope. This isn’t something you need to worry about when using Automatic Reference Counting, as it will happen automatically, but it’s best practice for the property attribute to show the resultant behavior. For more information, see Blocks Programming Topics.”<br>
-解释：“block默认是创建在栈上，意味着它们只存在于它们被创建的空间里。为了以后你可以在其他地方使用它，它们必须被拷贝到堆上。在ARC中，当block在创建空间的其他地方被使用时，会被自动拷贝。实际中我们习惯显性写出copy”<br>
+解释：“block默认是创建在栈上，意味着它们只存在于它们被创建的空间里。为了以后你可以在其他地方使用它，它们必须被拷贝到堆上。在ARC中，当block在创建空间的其他地方被使用时，会被自动拷贝。实际中我们习惯显性写出copy”
 
 **弱指引**
 
@@ -50,9 +52,9 @@ self.myBlock();// call this block;
 `ViewController.m`
 
  ```swift
-    cell.myBlock = ^{
-        NSLog(@"call this block from cell");
-    };
+cell.myBlock = ^{
+    NSLog(@"call this block from cell");
+};
  ```
 
 ## KVC & KVO
@@ -171,25 +173,43 @@ void objc_msgSeng(id self, SEL cmd, ...)
 ```objective-c
 id returnValue = objc_msgSend(someObject, @selector(messageName:), parameter);
 ```
-**该方法需要在接收者所属的类中搜寻其“方法列表”，如果能找到与其选择子名称相符的方法，就跳至其实现代码，若找不到，就沿着继承体系继续向上查找，等找到合适的方法之后再跳转。如果最终还是找不到相府的方法，那就执行“消息转发”操作。**
+**该方法需要在接收者所属的类中搜寻其“方法列表”，如果能找到与其选择子名称相符的方法，就跳至其实现代码，若找不到，就沿着继承体系继续向上查找，等找到合适的方法之后再跳转。如果最终还是找不到相符的方法，那就执行“消息转发”操作。**
 
 ## 第12条: 理解消息转发机制
 Step1: 动态方法解析（给个机会让类添加这个来实现这个函数）
 
+e.g.
+
 ```objective-c
-(BOOL)resolveInstanceMethod:(SEL) selector
++ (BOOL)resolveInstanceMethod:(SEL)sel {
+  
+  class_addMethod([self class],
+                  sel,
+                  imp_implementationWithBlock(^(id self) {
+	    NSLog(@"resolveInstanceMethod : %@", NSStringFromSelector(sel));
+  }),
+                  "v@*");
+
+  return YES;
+}
 ```
+
+
 
 Step2: 备援接收者（让别的对象去执行这个函数）
 
+e.g.
+
 ```objective-c
-(id)forwardingTargetForSelector:(SEL)selector
+- (id)forwardingTargetForSelector:(SEL)aSelector {
+    return AReceiverObject.new;
+}
 ```
 
 Step3: 完整的消息转发（灵活的将目标函数以其他形式执行）
 
 ```objective-c
-(void)forwardInvocation:(NSInvocation*)invocation
++ (void)forwardInvocation:(NSInvocation*)invocation
 ```
 
 #### 在crash之前，阻止预防
@@ -206,11 +226,11 @@ Step3: 完整的消息转发（灵活的将目标函数以其他形式执行）
 
 选择了forwardingTargetForSelector之后，可以将NSObject的该方法重写，做以下几步的处理：
 
-1.动态创建一个自定义类
+1. 动态创建一个自定义类
 
-2.动态为自定义类添加对应的Selector，用一个通用的返回0的函数来实现该SEL的IMP
+2. 动态为自定义类添加对应的Selector，用一个通用的返回0的函数来实现该SEL的IMP
 
-3.将消息直接转发到这个自定义类对象上。
+3. 将消息直接转发到这个自定义类对象上。
 
 ## 第13条: 方法调配技术
 一般来说，只在调试程序时候才需要在运行期修改方法实现，不宜滥用，用多了不宜读懂且难以维护
@@ -250,10 +270,10 @@ if let m1 = m1, let m2 = m2{
 ```
 ```swift
 // Objcetive-C
-    Method originalTurnOn = class_getInstanceMethod(mustang.class, @selector(turnOn));
-    IMP newIMP =  class_getMethodImplementation(mustang.class, @selector(accelerate));
-    method_setImplementation(originalTurnOn, newIMP);//method_getImplementation(newTurnOn));
-    [mustang turnOn];
+Method originalTurnOn = class_getInstanceMethod(mustang.class, @selector(turnOn));
+IMP newIMP =  class_getMethodImplementation(mustang.class, @selector(accelerate));
+method_setImplementation(originalTurnOn, newIMP);//method_getImplementation(newTurnOn));
+[mustang turnOn];
 ```
 
 ## 第41条: 多用派发队列，少用同步锁
@@ -270,11 +290,11 @@ if let m1 = m1, let m2 = m2{
 }
 ```
 
-它可以保证每个对象实例都不受干扰的运行synchronizedMethod，然而如果滥用@synchronized(self) 则会降低代码效率，因为共用用一个锁的那些同步块，都必须按照顺序执行。若是在self对象上频繁加锁，那么程序可能要等另一段与此无关的代码执行完，才能继续执行当前代码。
+它可以保证每个对象实例都不受干扰的运行synchronizedMethod，然而如果滥用@synchronized(self) 则**会降低代码效率，因为共用用一个锁的那些同步块，都必须按照顺序执行。若是在self对象上频繁加锁，那么程序可能要等另一段与此无关的代码执行完，才能继续执行当前代码。**
 
 属性就是做成**原子的atomic**修饰就可以做到,但是不能说是线程安全的。
 
-方法二： NSLock对象
+**方法二： NSLock对象**
 
 ```objective-c
 _lock = [[NSLock alloc] init];
@@ -288,7 +308,9 @@ _lock = [[NSLock alloc] init];
 
 **缺陷：**极端情况下会导致死锁，另外效率也不高。
 
-**代替方案：使用GCD “串行同步队列”** serial synchronization queue ，get和set方法都在一个队列中，即可保证数据同步。
+**方法三：使用GCD “串行同步队列”**
+
+set方法和get方法都安排在序列化的队列中执行，即可保证数据同步。
 
 ```objective-c
 _syncQueue = dispatch_queue_create("com.xxx.syncqueue", NULL);
@@ -306,9 +328,9 @@ _syncQueue = dispatch_queue_create("com.xxx.syncqueue", NULL);
 }
 ```
 
-set方法和get方法都安排在序列化的队列中执行，所有针对属性的访问操作就都同步了。
+**进一步优化：把set方法同步派发改为异步派发**。
 
-**进一步优化：把set方法同步派发改为异步派发**。set方法并不一定非要是同步的。因为set方法并不用返回值，所以set方法可以改成如下：
+set方法并不一定非要是同步的。因为set方法并不用返回值，所以set方法可以改成如下：
 
 ```objective-c
 - (void)setSomeString:(NSString*)someString{
@@ -318,9 +340,11 @@ set方法和get方法都安排在序列化的队列中执行，所有针对属�
 }
 ```
 
-弊端：因为执行异步派发时需要拷贝块，如果拷贝块所用的时间超过执行块所用的时间，则会比原来更慢。
+**弊端**：因为执行异步派发时需要拷贝块，如果拷贝块所用的时间超过执行块所用的时间，则会比原来更慢。
 
-**并发队列：** 并行执行多个get方法，而get方法和set方法之间不能并发执行。
+**方法四：并发队列** 
+
+并行执行多个get方法，而get方法和set方法之间不能并发执行。
 
 ```objective-c
 _syncQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
@@ -348,4 +372,4 @@ _syncQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 }
 ```
 
-![](/Users/liuxudong/Documents/GitHub/MyWikis/resource/oc_1.png)
+![](../resource/oc_1.png)
