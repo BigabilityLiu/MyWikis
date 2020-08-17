@@ -152,12 +152,12 @@ UIApplicationMain 函数是整个 app 的入口,它自己会创建一个 main ru
 
 #### UIImageView高性能添加圆角
 1.最简单的图片圆角设置:
-```
+```objective-c
 self.imageView.layer.cornerRadius=50;
 self.imageView.layer.masksToBounds=YES;
 ```
 2.设置Rasterize光栅化处理
-```
+```objective-c
 self.imageView.layer.cornerRadius=50;
 self.imageView.clipsToBounds=YES;
 self.imageView.layer.shouldRasterize = YES;
@@ -170,7 +170,7 @@ self.imageView.layer.rasterizationScale=[UIScreen mainScreen].scale;
 * 但是光栅化原始图像需要时间，而且还会消耗额外的内存。如果layer内容经常发生变化，会导致多次光栅化合成，浪费更多性能。所以需要根据实际情况取舍。
 
 3. Core Graphic 绘制圆角图片（推荐）。
-```
+```objective-c
 UIGraphicsBeginImageContextWithOptions(self.imageView.bounds.size, NO, [UIScreen mainScreen].scale);
 // UIBezierPath贝塞尔曲线绘制裁剪出一个圆形
 [[UIBezierPath bezierPathWithRoundedRect:self.imageView.bounds
@@ -196,6 +196,10 @@ UIGraphicsEndImageContext();
 ##### [十种排序算法](http://www.codeceo.com/article/10-sort-algorithm-interview.html#0-tsina-1-10490-397232819ff9a47a7b7e80a40613cfe1)
 
 # [git-flow](https://www.git-tower.com/learn/git/ebook/cn/command-line/advanced-topics/git-flow)
+
+weak指针自动置为nil的底层实现
+
+autoreleasepool 什么时候释放 在什么场景下使用，iOS原生的使用场景
 
 
 
