@@ -159,12 +159,12 @@ UIApplicationMain 函数是整个 app 的入口,它自己会创建一个 main ru
 
 #### UIImageView高性能添加圆角
 1.最简单的图片圆角设置:
-```
+```objective-c
 self.imageView.layer.cornerRadius=50;
 self.imageView.layer.masksToBounds=YES;
 ```
 2.设置Rasterize光栅化处理
-```
+```objective-c
 self.imageView.layer.cornerRadius=50;
 self.imageView.clipsToBounds=YES;
 self.imageView.layer.shouldRasterize = YES;
@@ -177,7 +177,7 @@ self.imageView.layer.rasterizationScale=[UIScreen mainScreen].scale;
 * 但是光栅化原始图像需要时间，而且还会消耗额外的内存。如果layer内容经常发生变化，会导致多次光栅化合成，浪费更多性能。所以需要根据实际情况取舍。
 
 3. Core Graphic 绘制圆角图片（推荐）。
-```
+```objective-c
 UIGraphicsBeginImageContextWithOptions(self.imageView.bounds.size, NO, [UIScreen mainScreen].scale);
 // UIBezierPath贝塞尔曲线绘制裁剪出一个圆形
 [[UIBezierPath bezierPathWithRoundedRect:self.imageView.bounds
@@ -202,6 +202,9 @@ A类如何继承B类和C类
 2. protocol、delegate：将A类需要继承的方法以及**属性**在ClassB和ClassC中各自声明一份协议，A类遵守这两份协议，同时在C类中实现协议中的方法以及属性
 3. Category :在A类新建一个Category，实现B、C类中的方法，或者使用objc_setAssociatedObject动态添加属性
 
+#### autoreleasepool 什么时候释放 在什么场景下使用，iOS原生的使用场景
+#### weak指针自动置为nil的底层实现
+
 # [网络](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md)
 ##### [TCP与UDP区别](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md#%E4%BC%A0%E8%BE%93%E5%B1%82)
 ##### [用户在浏览器输入一个地址后，发生了什么](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md#16-%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AE%E4%B8%8E--http-%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%85%B3%E7%B3%BB)
@@ -214,8 +217,8 @@ A类如何继承B类和C类
 # [git-flow](https://www.git-tower.com/learn/git/ebook/cn/command-line/advanced-topics/git-flow)
 
 #### 递归的缺点
-
 1. 效率低：递归由于是函数调用自身，而函数调用是有时间和空间的消耗的：每一次函数调用，都需要在内存栈中分配空间以保存参数、返回地址以及临时变量，而往栈中压入数据和弹出数据都需要时间。
 2. 效率低：递归中很多计算都是重复的。
 3. 性能差：调用栈可能会溢出，其实每一次函数调用会在内存栈中分配空间，而每个进程的栈的容量是有限的，当调用的层次太多时，就会超出栈的容量，从而导致栈溢出。
+
 
