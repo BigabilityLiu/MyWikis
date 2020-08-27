@@ -62,6 +62,55 @@ cell.myBlock = ^{
 
 [facebook/KVOController](https://github.com/facebook/KVOController)
 
+### KVC 总结
+
+键值编码是一种间接访问对象的属性使用字符串来标识属性，而不是通过调用存取方法直接或通过实例变量访问的机制，非对象类型的变量将被自动封装或者解封成对象，很多情况下会简化程序代码。
+
+#### 原理
+
+当某个类的对象第一次被观察时，系统就会在运行期动态地创建该类的一个派生类，在这个派生类中重写基类中任何被观察属性的 setter 方法，
+
+派生类在被重写的 setter 方法实现真正的通知机制。
+
+同时派生类还重写了 class 方法以“欺骗”外部调用者它就是起初的那个类。然后系统将这个对象的 isa 指针指向这个新诞生的派生类，因此这个对象就成为该派生类的对象了，因而在该对象上对 setter 的调用就会调用重写的 setter，从而激活键值通知机制。此外，派生类还重写了 dealloc 方法来释放资源。
+
+```objective-c
+- (void)setName:(NSString *)newName
+{
+    [self willChangeValueForKey:@"name"];    // KVO在调用存取方法之前总调用
+    [super setValue:newName forKey:@"name"]; // 调用父类的存取方法
+    [self didChangeValueForKey:@"name"];     // KVO在调用存取方法之后总调用
+}
+```
+
+**优点：**
+
+1. 不需要通过 setter、getter 方法去访问对象的属性，可以访问对象的私有属性。
+2. 可以轻松处理集合类(NSArray)。
+
+**缺点：**
+
+1. 一旦使用 KVC 你的编译器无法检查出错误，即不会对设置的键、键值路径进行错误检查。
+2. 执行效率要低于 setter 和 getter 方法。因为使用 KVC 键值编码，它必须先解析字符串，然后在设置或者访问对象的实例变量。
+3. 使用 KVC 会破坏类的封装性。
+
+### KVO 总结
+
+KVO 是一个对象能观察另一个对象属性的值，KVO 适合任何对象监听另一个对象的改变，这是一个对象与另外一个对象保持同步的一种方法。KVO 只能对属性做出反应，不会用来对方法或者动作做出反应。
+
+**优点：**
+
+1. 提供一个简单的方法来实现两个对象的同步。
+2. 能够提供观察的属性的新值和旧值。
+3. 每一次属性值改变都是自动发送通知，不需要开发者手动实现。
+4. 用 keypath 来观察属性，因此也可以观察嵌套对象。
+
+**缺点：**
+
+1. 观察的属性必须使用字符串来定义，因此编译器不会出现警告和检查。
+2. 代码冗长，当观察多个对象的属性时就要写"if"语句，来判断当前的回调属于哪个对象的属性的回调。
+3. 推出时需要remove观察者
+
 ## weakSelf & strongSelf
 [深入研究 Block 用 weakSelf、strongSelf、@weakify、@strongify 解决循环引用](https://halfrost.com/ios_block_retain_circle/)
 
@@ -140,6 +189,16 @@ NS_ASSUME_NONNULL_END
     student.study();
 ```
 strongSelf的目的是因为一旦进入block执行，不允许self在这个执行过程中释放。block执行完后这个strongSelf 会自动释放，不会存在循环引用问题。但是依然需要判断strongSelf是否为空，因为strongSelf只能保证在函数内即block内不为空，不能保证外部情况。
+
+## __block 关键字的底层实现原理
+
+**block不允许修改外部变量的值**（这里所说的外部变量的值，指的是栈中 auto 变量）
+
+如果要修改，需要满足以下两个条件：
+
+1. **将 auto(无修饰符修饰)变量 从栈 copy 到堆**，原因是：栈中内存管理是由系统管理，出了作用域就会被回收， 堆中才是可以由我们程序员管理。**在 ARC 中无论是否添加 `__block` ，block 中的 auto 变量都会被从栈上 copy 到堆上。**
+2. **将 auto 变量封装为结构体(对象)**。比如`NSMutableArray`。不可以直接复制，但是可以执行他的` addObject`方法。像基础变量int，使用__block修饰后，会被封装为结构体后使用。
+
 # Effective Objective-C 读书笔记
 ## 第2条：在类的头文件中尽量少引入其他头文件
 应该在.h文件中尽量使用`@class XXX;`引入类，在.m文件中需要用到时，再使用`#import "XXX".h` 引入头文件,原因：
@@ -181,6 +240,7 @@ Step1: 动态方法解析（给个机会让类添加这个来实现这个函数�
 e.g.
 
 ```objective-c
+// 或者resolveClassMethod
 + (BOOL)resolveInstanceMethod:(SEL)sel {
   
   class_addMethod([self class],
@@ -232,7 +292,7 @@ Step3: 完整的消息转发（灵活的将目标函数以其他形式执行）
 
 3. 将消息直接转发到这个自定义类对象上。
 
-## 第13条: 方法调配技术
+## 第13条: 方法调配技术Method Swizzling
 一般来说，只在调试程序时候才需要在运行期修改方法实现，不宜滥用，用多了不宜读懂且难以维护
 
 **Swizzling 方法替换在Objcetive-C和Swift5中的实现**
@@ -373,3 +433,4 @@ _syncQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 ```
 
 ![](../resource/oc_1.png)
+

@@ -92,6 +92,13 @@ Objective-C 是一个动态语言，这意味着它不仅需要一个编译器�
 
 在对象的生命周期中自动添加retain、release、autorelease等操作。
 
+#### `property`的作用是什么
+
+实际上@property = 实例变量 + get方法 + set方法
+
+1. 自动合成getter和setter方法
+2. 关键词能够传递出相关行为的额外信息
+
 #### [属性](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C%20Notes.md#property-attributes)
 
 ### AutoreleasePool 
@@ -184,7 +191,16 @@ UIGraphicsEndImageContext();
 ```
 ####  UIView和CALayer
 * UIView接受并处理事件
+
 * Layer提供内容的绘制和显示
+
+#### OC如何实现多继承？
+
+A类如何继承B类和C类
+
+1. 消息转发：有三个阶段：动态方法解析、快速消息转发、标准消息转发，在第2或3阶段，把消息转发到B类或C类
+2. protocol、delegate：将A类需要继承的方法以及**属性**在ClassB和ClassC中各自声明一份协议，A类遵守这两份协议，同时在C类中实现协议中的方法以及属性
+3. Category :在A类新建一个Category，实现B、C类中的方法，或者使用objc_setAssociatedObject动态添加属性
 
 # [网络](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md)
 ##### [TCP与UDP区别](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md#%E4%BC%A0%E8%BE%93%E5%B1%82)
@@ -193,9 +209,13 @@ UIGraphicsEndImageContext();
 
 
 # 算法篇
-##### [十种排序算法](http://www.codeceo.com/article/10-sort-algorithm-interview.html#0-tsina-1-10490-397232819ff9a47a7b7e80a40613cfe1)
+##### [十种排序算法，重点（快速，插入，归并）](http://www.codeceo.com/article/10-sort-algorithm-interview.html#0-tsina-1-10490-397232819ff9a47a7b7e80a40613cfe1)
 
 # [git-flow](https://www.git-tower.com/learn/git/ebook/cn/command-line/advanced-topics/git-flow)
 
+#### 递归的缺点
 
+1. 效率低：递归由于是函数调用自身，而函数调用是有时间和空间的消耗的：每一次函数调用，都需要在内存栈中分配空间以保存参数、返回地址以及临时变量，而往栈中压入数据和弹出数据都需要时间。
+2. 效率低：递归中很多计算都是重复的。
+3. 性能差：调用栈可能会溢出，其实每一次函数调用会在内存栈中分配空间，而每个进程的栈的容量是有限的，当调用的层次太多时，就会超出栈的容量，从而导致栈溢出。
 
