@@ -205,6 +205,15 @@ A类如何继承B类和C类
 #### autoreleasepool 什么时候释放 在什么场景下使用，iOS原生的使用场景
 #### weak指针自动置为nil的底层实现
 
+#### 通过子类修改父类私有属性
+
+1. 通过`setValue:(id)value forKey`修改
+2. 通过运行时`performSelector:withObject:`方式修改
+3. 在子类中创建父类的class extension
+4. 在子类在内部声明一个跟父类内部同名的属性
+
+#### 讲解熟悉的开源库AFNetworking，MJExtension
+
 # [网络](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md)
 ##### [TCP与UDP区别](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md#%E4%BC%A0%E8%BE%93%E5%B1%82)
 ##### [用户在浏览器输入一个地址后，发生了什么](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md#16-%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AE%E4%B8%8E--http-%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%85%B3%E7%B3%BB)
