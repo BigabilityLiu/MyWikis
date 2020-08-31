@@ -158,7 +158,7 @@ UIApplicationMain 函数是整个 app 的入口,它自己会创建一个 main ru
 
 ##### [同步锁:如何实现一个文件（属性）的多线程读，单线程写](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C%20Notes.md#%E7%AC%AC41%E6%9D%A1-%E5%A4%9A%E7%94%A8%E6%B4%BE%E5%8F%91%E9%98%9F%E5%88%97%E5%B0%91%E7%94%A8%E5%90%8C%E6%AD%A5%E9%94%81)
 
-### [事件的传递和响应机制](https://www.jianshu.com/p/2e074db792ba)
+## [事件的传递和响应机制](https://www.jianshu.com/p/2e074db792ba)
 
 ## 实践
 #### TableViewCell里有大图片，怎样处理将网络请求降到最低，效率提升到最高
@@ -211,8 +211,11 @@ A类如何继承B类和C类
 #### 通过子类修改父类私有属性
 
 1. 通过`setValue:(id)value forKey`修改
+
 2. 通过运行时`performSelector:withObject:`方式修改
+
 3. 在子类中创建父类的class extension
+
 4. 在子类在内部声明一个跟父类内部同名的属性
 
 #### NSObject的内存大小
@@ -327,10 +330,50 @@ change = {
 job = d
 ```
 
+#### OC的反射机制
+
+```objective-c
+// SEL和字符串转换
+NSString *NSStringFromSelector(SEL aSelector);
+SEL NSSelectorFromString(NSString *aSelectorName);
+// Class和字符串转换
+NSString *NSStringFromClass(Class aClass);
+Class __nullable NSClassFromString(NSString *aClassName);
+// Protocol和字符串转换
+NSString *NSStringFromProtocol(Protocol *proto);
+Protocol * __nullable NSProtocolFromString(NSString *namestr);
+```
+
+```objective-c
+// 当前对象是否这个类或其子类的实例
+- (BOOL)isKindOfClass:(Class)aClass;
+// 当前对象是否是这个类的实例
+- (BOOL)isMemberOfClass:(Class)aClass;
+// 当前对象是否遵守这个协议
+- (BOOL)conformsToProtocol:(Protocol *)aProtocol;
+// 当前对象是否实现这个方法
+- (BOOL)respondsToSelector:(SEL)aSelector;
+```
+
+#### iOS的timer和CADisplayLink的区别
+
+`CADisplayLink`是一个能让我们以和屏幕刷新率相同的频率将内容画到屏幕上的定时器，使用场合相对专一，适合做UI的不停重绘，比如自定义动画引擎或者视频播放的渲染。
+
+`NSTimer`的使用范围要广泛的多，各种需要单次或者循环定时处理的任务都可以使用。
+
+##### CADisplayLink
+
+优势：依托于设备屏幕刷新频率触发事件，所以其触发时间上是最准确的。也是`最适合做UI不断刷新的事件`，过渡相对流畅，无卡顿感。
+
+缺点：
+
+- 由于依托于屏幕刷新频率，如果CPU不堪重负而影响了屏幕刷新，那么我们的触发事件也会受到相应影响。
+- selector触发的时间间隔只能是duration的整倍数。
+- selector事件执行时间如果大于其触发间隔就会造成掉帧现象。
+
 #### weak指针自动置为nil的底层实现
 
 #### 讲解熟悉的开源库AFNetworking, MJExtension, SDWebImage
-
 # [网络](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md)
 ##### [TCP与UDP区别](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md#%E4%BC%A0%E8%BE%93%E5%B1%82)
 ##### [用户在浏览器输入一个地址后，发生了什么](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md#16-%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AE%E4%B8%8E--http-%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%85%B3%E7%B3%BB)
