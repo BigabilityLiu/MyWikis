@@ -38,33 +38,25 @@
 ## Blocks
 使用方法[fuckingblocksyntax.com](http://fuckingblocksyntax.com/)
 
-**示例**
+##### __block 关键字的底层实现原理
 
-`TableViewCell.h`
+**block不允许修改外部变量的值**（这里所说的外部变量的值，指的是栈中 auto 变量）。但block可以读取外部变量的值，比如`NSMutableArray`。不可以直接赋值，但是可以执行他的` addObject`方法。
 
-```objective-c
-@property (nonatomic, copy, nullable) void (^myBlock)(void);
-```
-`TableViewCell.m`
-```swift
-self.myBlock();// call this block;
-```
-`ViewController.m`
+`__block` 作用是将 auto 变量封装为结构体(对象)，在结构体内部新建一个同名 auto 变量，block 内截获该结构体的指针，在 block 中使用自动变量时，使用指针指向的结构体中的自动变量。于是就可以达到修改外部变量的作用。
 
- ```swift
-cell.myBlock = ^{
-    NSLog(@"call this block from cell");
-};
- ```
+如果要修改，需要满足以下两个条件：
+
+1. **将 auto(无修饰符修饰)变量 从栈 copy 到堆**，原因是：栈中内存管理是由系统管理，出了作用域就会被回收， 堆中才是可以由我们程序员管理。**在 ARC 中无论是否添加 `__block` ，block 中的 auto 变量都会被从栈上 copy 到堆上。**
+2. **将 auto 变量封装为结构体(对象)**。
 
 ## KVC & KVO
 [From Objccn.io](https://objccn.io/issue-7-3/)
 
 [facebook/KVOController](https://github.com/facebook/KVOController)
 
-### KVC 总结
+### KVO 总结
 
-键值编码是一种间接访问对象的属性使用字符串来标识属性，而不是通过调用存取方法直接或通过实例变量访问的机制，非对象类型的变量将被自动封装或者解封成对象，很多情况下会简化程序代码。
+KVO 是一个对象能观察另一个对象属性的值，KVO 适合任何对象监听另一个对象的改变，这是一个对象与另外一个对象保持同步的一种方法。KVO 只能对属性做出反应，不会用来对方法或者动作做出反应。
 
 #### 原理
 
@@ -85,21 +77,6 @@ cell.myBlock = ^{
 
 **优点：**
 
-1. 不需要通过 setter、getter 方法去访问对象的属性，可以访问对象的私有属性。
-2. 可以轻松处理集合类(NSArray)。
-
-**缺点：**
-
-1. 一旦使用 KVC 你的编译器无法检查出错误，即不会对设置的键、键值路径进行错误检查。
-2. 执行效率要低于 setter 和 getter 方法。因为使用 KVC 键值编码，它必须先解析字符串，然后在设置或者访问对象的实例变量。
-3. 使用 KVC 会破坏类的封装性。
-
-### KVO 总结
-
-KVO 是一个对象能观察另一个对象属性的值，KVO 适合任何对象监听另一个对象的改变，这是一个对象与另外一个对象保持同步的一种方法。KVO 只能对属性做出反应，不会用来对方法或者动作做出反应。
-
-**优点：**
-
 1. 提供一个简单的方法来实现两个对象的同步。
 2. 能够提供观察的属性的新值和旧值。
 3. 每一次属性值改变都是自动发送通知，不需要开发者手动实现。
@@ -110,6 +87,21 @@ KVO 是一个对象能观察另一个对象属性的值，KVO 适合任何对象
 1. 观察的属性必须使用字符串来定义，因此编译器不会出现警告和检查。
 2. 代码冗长，当观察多个对象的属性时就要写"if"语句，来判断当前的回调属于哪个对象的属性的回调。
 3. 推出时需要remove观察者
+
+### KVC 总结
+
+键值编码是一种间接访问对象的属性使用字符串来标识属性，而不是通过调用存取方法直接或通过实例变量访问的机制，非对象类型的变量将被自动封装或者解封成对象，很多情况下会简化程序代码。
+
+**优点：**
+
+1. 不需要通过 setter、getter 方法去访问对象的属性，可以访问对象的私有属性。
+2. 可以轻松处理集合类(NSArray)。
+
+**缺点：**
+
+1. 一旦使用 KVC 你的编译器无法检查出错误，即不会对设置的键、键值路径进行错误检查。
+2. 执行效率要低于 setter 和 getter 方法。因为使用 KVC 键值编码，它必须先解析字符串，然后在设置或者访问对象的实例变量。
+3. 使用 KVC 会破坏类的封装性
 
 ## weakSelf & strongSelf
 [深入研究 Block 用 weakSelf、strongSelf、@weakify、@strongify 解决循环引用](https://halfrost.com/ios_block_retain_circle/)
@@ -190,15 +182,6 @@ NS_ASSUME_NONNULL_END
 ```
 strongSelf的目的是因为一旦进入block执行，不允许self在这个执行过程中释放。block执行完后这个strongSelf 会自动释放，不会存在循环引用问题。但是依然需要判断strongSelf是否为空，因为strongSelf只能保证在函数内即block内不为空，不能保证外部情况。
 
-## __block 关键字的底层实现原理
-
-**block不允许修改外部变量的值**（这里所说的外部变量的值，指的是栈中 auto 变量）
-
-如果要修改，需要满足以下两个条件：
-
-1. **将 auto(无修饰符修饰)变量 从栈 copy 到堆**，原因是：栈中内存管理是由系统管理，出了作用域就会被回收， 堆中才是可以由我们程序员管理。**在 ARC 中无论是否添加 `__block` ，block 中的 auto 变量都会被从栈上 copy 到堆上。**
-2. **将 auto 变量封装为结构体(对象)**。比如`NSMutableArray`。不可以直接复制，但是可以执行他的` addObject`方法。像基础变量int，使用__block修饰后，会被封装为结构体后使用。
-
 # Effective Objective-C 读书笔记
 ## 第2条：在类的头文件中尽量少引入其他头文件
 应该在.h文件中尽量使用`@class XXX;`引入类，在.m文件中需要用到时，再使用`#import "XXX".h` 引入头文件,原因：
@@ -256,7 +239,7 @@ e.g.
 
 
 
-Step2: 备援接收者（让别的对象去执行这个函数）
+Step2: 备援接收者（快速转发，让别的对象去执行这个函数）
 
 e.g.
 
@@ -266,7 +249,7 @@ e.g.
 }
 ```
 
-Step3: 完整的消息转发（灵活的将目标函数以其他形式执行）
+Step3: 完整的消息转发（标准转发，灵活的将目标函数以其他形式执行）
 
 ```objective-c
 + (void)forwardInvocation:(NSInvocation*)invocation

@@ -12,15 +12,23 @@
 - CFRunLoop 是基于 pthread 来管理的
 - 线程和 RunLoop 之间是一一对应的。线程刚创建时并没有 RunLoop，如果你不主动获取，那它一直都不会有。RunLoop 的创建是发生在第一次获取时，RunLoop 的销毁是发生在线程结束时。你只能在一个线程的内部获取其 RunLoop（主线程除外）。
 
-#### Mode
+#### NSRunLoopMode
+
+1. [`NSRunLoopCommonModes`](https://developer.apple.com/documentation/foundation/nsrunloopcommonmodes?language=objc)all run loop modes that have been declared as a member of the set of “common" modes
+2. [`NSDefaultRunLoopMode`](https://developer.apple.com/documentation/foundation/nsdefaultrunloopmode?language=objc)The mode to deal with input sources other than(除...之外) [`NSConnection`](https://developer.apple.com/documentation/foundation/nsconnection?language=objc) objects.
+3. [`NSEventTrackingRunLoopMode`](https://developer.apple.com/documentation/appkit/nseventtrackingrunloopmode?language=objc)A run loop should be set to this mode when tracking events modally, such as a mouse-dragging loop.
+4. [`NSModalPanelRunLoopMode`](https://developer.apple.com/documentation/appkit/nsmodalpanelrunloopmode?language=objc)A run loop should be set to this mode when waiting for input from a modal panel, such as `NSSavePanel` or `NSOpenPanel`.
+5. [`UITrackingRunLoopMode`](https://developer.apple.com/documentation/uikit/uitrackingrunloopmode?language=objc)The mode set while tracking in controls takes place.
 
 一个 RunLoop 包含若干个 Mode，每个 Mode 又包含若干个 Source/Timer/Observer。每次调用 RunLoop 的主函数时，只能指定其中一个 Mode，这个Mode被称作 CurrentMode。如果需要切换 Mode，只能退出 Loop，再重新指定一个 Mode 进入。这样做主要是为了分隔开不同组的 Source/Timer/Observer，让其互不影响。
+
+##### Mode item
 
 1. **CFRunLoopSourceRef** 是事件产生的地方。
 2. **CFRunLoopTimerRef** 是基于时间的触发器。
 3. **CFRunLoopObserverRef** 是观察者，当 RunLoop 的状态发生变化时，观察者就能通过回调接受到这个变化。
 
-上面的 Source/Timer/Observer 被统称为 **mode item**，一个 item 可以被同时加入多个 mode。但一个 item 被重复加入同一个 mode 时是不会有效果的。
+一个 item 可以被同时加入多个 mode。但一个 item 被重复加入同一个 mode 时是不会有效果的。
 
 **应用场景举例： Timer与ScrollView**
 
@@ -31,12 +39,6 @@
 #### 应用
 
 ##### AutoreleasePool
-
-App启动后，苹果在主线程 RunLoop 里注册了两个 Observer，
-
-第一个 Observer 监视的事件是 Entry(**即将进入Loop**)，其回调内会调用 _objc_autoreleasePoolPush() **创建自动释放池**，优先级最高，保证创建释放池发生在其他所有回调之前。
-
-第二个 Observer 监视了两个事件： BeforeWaiting(**准备进入休眠**) 时调用_objc_autoreleasePoolPop() 和 _objc_autoreleasePoolPush() **释放旧的池并创建新池**；Exit(**即将退出Loop**) 时调用 _objc_autoreleasePoolPop() 来**释放自动释放池**。这个 Observer 优先级最低，保证其释放池子发生在其他所有回调之后。
 
 ##### 事件响应
 
@@ -106,7 +108,22 @@ Objective-C 是一个动态语言，这意味着它不仅需要一个编译器�
 * 当对象调用 autorelease 方法时，会将对象加入 AutoreleasePoolPage 的栈中
 * 调用 AutoreleasePoolPage::pop 方法会向栈中的对象发送 release 消息
 
-#### 用处
+####  Autorelease Pool 进行 Drain 的时机
+
+App启动后，苹果在主线程 RunLoop 里注册了两个 Observer，
+
+第一个 Observer 监视的事件是 Entry(**即将进入Loop**)，其回调内会调用 _objc_autoreleasePoolPush() **创建自动释放池**，优先级最高，保证创建释放池发生在其他所有回调之前。
+
+第二个 Observer 监视了两个事件： BeforeWaiting(**准备进入休眠**) 时调用_objc_autoreleasePoolPop() 和 _objc_autoreleasePoolPush() **释放旧的池并创建新池**；Exit(**即将退出Loop**) 时调用 _objc_autoreleasePoolPop() 来**释放自动释放池**。这个 Observer 优先级最低，保证其释放池子发生在其他所有回调之后。
+
+系统在 runloop 中创建的 autoreleaspool 会在**runloop一个event** 结束时进行释放操作。
+
+我们手动创建的 autoreleasepool 会在 **block 执行完成**之后进行 drain 操作。需要注意的是：
+
+* 当 block 以异常（exception）结束时，pool 不会被 drain
+* Pool 的 drain 操作会把所有标记为 autorelease 的对象的引用计数减一，但是并不意味着这个对象一定会被释放掉，我们可以在 autorelease pool 中手动 retain 对象，以延长它的生命周期（在 MRC 中）。
+
+#### 手动操作
 Cocoa Touch 的 Runloop 中，每个 runloop circle 中系统都自动加入了 Autorelease Pool 的创建和释放。
 当我们需要创建和销毁大量的对象时，使用手动创建的 autoreleasepool 可以有效的避免内存峰值的出现。因为如果不手动创建的话，外层系统创建的 pool 会在整个 runloop circle 结束之后才进行 drain，手动创建的话，会在 block 结束之后就进行 drain 操作。例子：
 
@@ -121,13 +138,6 @@ for (int i = 0; i < 100000000; i++)
 }
 ```
 如果不使用 autoreleasepool ，需要在循环结束之后释放 100000000 个字符串，如果 使用的话，则会在每次循环结束的时候都进行 release 操作。
-####  Autorelease Pool 进行 Drain 的时机
-系统在 runloop 中创建的 autoreleaspool 会在**runloop一个event** 结束时进行释放操作。我们手动创建的 autoreleasepool 会在 **block 执行完成**之后
-进行 drain 操作。需要注意的是：
-
-* 当 block 以异常（exception）结束时，pool 不会被 drain
-* Pool 的 drain 操作会把所有标记为 autorelease 的对象的引用计数减一，但是并不意味着这个对象一定会被释放掉，我们可以在 autorelease pool 中手动 retain 对象，以延长它的生命周期（在 MRC 中）。
-
 #### main.m 中 Autorelease Pool
 UIApplicationMain 函数是整个 app 的入口,它自己会创建一个 main run loop，我们大致可以得到下面的结论：
 1. main.m 中的 UIApplicationMain 永远不会返回，只有在系统 kill 掉整个 app 时，系统会把应用占用的内存全部释放出来。
@@ -151,11 +161,7 @@ UIApplicationMain 函数是整个 app 的入口,它自己会创建一个 main ru
 ### [事件的传递和响应机制](https://www.jianshu.com/p/2e074db792ba)
 
 ## 实践
-#### 开发经历中，遇到了什么最难解决的问题，然后怎么克服了
-
-#### Alamofire源码解读（HTTP/RunLoop）
-
-#### tableViewCell里有大图片，怎样处理将网络请求降到最低，效率提升到最高
+#### TableViewCell里有大图片，怎样处理将网络请求降到最低，效率提升到最高
 
 #### UIImageView高性能添加圆角
 1.最简单的图片圆角设置:
@@ -202,9 +208,6 @@ A类如何继承B类和C类
 2. protocol、delegate：将A类需要继承的方法以及**属性**在ClassB和ClassC中各自声明一份协议，A类遵守这两份协议，同时在C类中实现协议中的方法以及属性
 3. Category :在A类新建一个Category，实现B、C类中的方法，或者使用objc_setAssociatedObject动态添加属性
 
-#### autoreleasepool 什么时候释放 在什么场景下使用，iOS原生的使用场景
-#### weak指针自动置为nil的底层实现
-
 #### 通过子类修改父类私有属性
 
 1. 通过`setValue:(id)value forKey`修改
@@ -212,7 +215,121 @@ A类如何继承B类和C类
 3. 在子类中创建父类的class extension
 4. 在子类在内部声明一个跟父类内部同名的属性
 
-#### 讲解熟悉的开源库AFNetworking，MJExtension
+#### NSObject的内存大小
+
+NSObject编译成C++代码后，如下:
+
+```c++
+struct NSObject_IMPL {
+    Class isa;
+};
+typedef struct objc_class *Class;
+```
+
+其实就是一个指向 `struct objc_class` 结构体类型的指针. 那么也就是说目前我们只发现 `NSObject` 对象对应的结构体只包含一个 `isa` 指针变量 , 一个指针变量在 64 位的机器上大小是 8 个字节。但**所有的OC对象至少为16字节**.
+
+```objective-c
+NSObject *lbobjc = [[NSObject alloc] init];
+        
+NSLog(@"实际需要的内存大小: %zd",class_getInstanceSize([lbobjc class]));
+NSLog(@"实际分配的内存大小: %zd",malloc_size((__bridge const void *)(lbobjc)));
+// 实际需要的内存大小: 8
+// 实际分配的内存大小: 16
+```
+
+（在64位机器上）结论如下：
+
+1. OC对象最少占用 `16` 个字节内存，满足 `16` 字节对齐标准 。
+2. 属性最终满足 `8` 字节对齐标准 .
+3. 当对象中包含属性, 会按属性占用内存开辟空间. 在结构体内存分配原则下自动偏移和补齐 .
+4. 可以通过 #pragma pack() 自定义对齐方式 .
+
+#### KVO怎么实现，_语法会不会触发，成员变量会不会触发，KVC+成员变量会不会触发，不用setter怎么触发KVO
+
+##### 实现原理
+
+- KVO是通过isa-swizzling技术实现的(这句话是整个KVO实现的重点)。
+- 在运行时根据原类创建一个中间类，这个中间类是原类的子类，并动态修改当前对象的isa指向中间类。当修改 instance 对象的属性时，会调用 Foundation框架的 _NSSetXXXValueAndNotify 函数 ,该函数里面会先调用 willChangeValueForKey: 然后调用父类原来的 setter 方法修改值，最后是 didChangeValueForKey:。didChangeValueForKey 内部会触发监听器（Oberser）的监听方法observeValueForKeyPath:ofObject:change:context:
+- 并且将class方法重写，返回原类的Class。
+
+```objective-c
+#import "ViewController.h"
+
+@interface ViewController () {
+  // 成员变量
+    NSString* job;
+}
+// 属性变量
+@property (nonatomic, copy) NSString* name;
+@end
+
+@implementation ViewController
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.name = @"1";
+    [self addObserver:self forKeyPath:@"name" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:nil];
+    self.name = @"2";
+//    _语法不会触发，因为不会调用set方法
+    _name = @"3";
+    NSLog(@"name = %@", _name);
+    
+    job = @"a";
+    [self addObserver:self forKeyPath:@"job" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:nil];
+//    成员变量不会触发，因为不会调用set方法
+    job = @"b";
+//    成员变量会触发，因为注册了observer就会有set方法，使用KVC就会调用set方法
+    [self setValue:@"c" forKey:@"job"];
+// 		也可以手动触发KVO
+    [self willChangeValueForKey:@"job"];
+    job = @"d";
+    [self didChangeValueForKey:@"job"];
+    NSLog(@"job = %@", job);
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if ([keyPath isEqualToString:@"name"]) {
+        NSLog(@"change = %@", change);
+    }
+    else if ([keyPath isEqualToString:@"job"]) {
+        NSLog(@"change = %@", change);
+    }
+    else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
+}
+- (void)dealloc
+{
+    [self removeObserver:self forKeyPath:@"name"];
+    [self removeObserver:self forKeyPath:@"job"];
+}
+@end
+```
+
+```objective-c
+被打印的结果
+change = {
+    kind = 1;
+    new = 2;
+    old = 1;
+}
+name = 3
+change = {
+    kind = 1;
+    new = c;
+    old = b;
+}
+change = {
+    kind = 1;
+    new = d;
+    old = c;
+}
+job = d
+```
+
+#### weak指针自动置为nil的底层实现
+
+#### 讲解熟悉的开源库AFNetworking, MJExtension, SDWebImage
 
 # [网络](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md)
 ##### [TCP与UDP区别](https://github.com/BigabilityLiu/MyWikis/blob/master/%E7%AE%97%E6%B3%95:%E7%BD%91%E7%BB%9C/%E5%9B%BE%E8%A7%A3HTTP.md#%E4%BC%A0%E8%BE%93%E5%B1%82)
@@ -221,13 +338,17 @@ A类如何继承B类和C类
 
 
 # 算法篇
-##### [十种排序算法，重点（快速，插入，归并）](http://www.codeceo.com/article/10-sort-algorithm-interview.html#0-tsina-1-10490-397232819ff9a47a7b7e80a40613cfe1)
-
-# [git-flow](https://www.git-tower.com/learn/git/ebook/cn/command-line/advanced-topics/git-flow)
+##### [十种排序算法，重点（归并，堆，快速，插入）](http://www.codeceo.com/article/10-sort-algorithm-interview.html#0-tsina-1-10490-397232819ff9a47a7b7e80a40613cfe1)
 
 #### 递归的缺点
 1. 效率低：递归由于是函数调用自身，而函数调用是有时间和空间的消耗的：每一次函数调用，都需要在内存栈中分配空间以保存参数、返回地址以及临时变量，而往栈中压入数据和弹出数据都需要时间。
 2. 效率低：递归中很多计算都是重复的。
 3. 性能差：调用栈可能会溢出，其实每一次函数调用会在内存栈中分配空间，而每个进程的栈的容量是有限的，当调用的层次太多时，就会超出栈的容量，从而导致栈溢出。
 
+# [git-flow](https://www.git-tower.com/learn/git/ebook/cn/command-line/advanced-topics/git-flow)
 
+# 项目
+
+#### 开发经历中，遇到了什么最难解决的问题，然后怎么克服了
+
+#### 项目中的亮点
