@@ -208,9 +208,53 @@ A类如何继承B类和C类
 #### 通过子类修改父类私有属性
 
 1. 通过`setValue:(id)value forKey`修改
+
 2. 通过运行时`performSelector:withObject:`方式修改
+
 3. 在子类中创建父类的class extension
+
 4. 在子类在内部声明一个跟父类内部同名的属性
+
+#### OC的反射机制
+
+```objective-c
+// SEL和字符串转换
+NSString *NSStringFromSelector(SEL aSelector);
+SEL NSSelectorFromString(NSString *aSelectorName);
+// Class和字符串转换
+NSString *NSStringFromClass(Class aClass);
+Class __nullable NSClassFromString(NSString *aClassName);
+// Protocol和字符串转换
+NSString *NSStringFromProtocol(Protocol *proto);
+Protocol * __nullable NSProtocolFromString(NSString *namestr);
+```
+
+```objective-c
+// 当前对象是否这个类或其子类的实例
+- (BOOL)isKindOfClass:(Class)aClass;
+// 当前对象是否是这个类的实例
+- (BOOL)isMemberOfClass:(Class)aClass;
+// 当前对象是否遵守这个协议
+- (BOOL)conformsToProtocol:(Protocol *)aProtocol;
+// 当前对象是否实现这个方法
+- (BOOL)respondsToSelector:(SEL)aSelector;
+```
+
+#### iOS的timer和CADisplayLink的区别
+
+`CADisplayLink`是一个能让我们以和屏幕刷新率相同的频率将内容画到屏幕上的定时器，使用场合相对专一，适合做UI的不停重绘，比如自定义动画引擎或者视频播放的渲染。
+
+`NSTimer`的使用范围要广泛的多，各种需要单次或者循环定时处理的任务都可以使用。
+
+##### CADisplayLink
+
+优势：依托于设备屏幕刷新频率触发事件，所以其触发时间上是最准确的。也是`最适合做UI不断刷新的事件`，过渡相对流畅，无卡顿感。
+
+缺点：
+
+- 由于依托于屏幕刷新频率，如果CPU不堪重负而影响了屏幕刷新，那么我们的触发事件也会受到相应影响。
+- selector触发的时间间隔只能是duration的整倍数。
+- selector事件执行时间如果大于其触发间隔就会造成掉帧现象。
 
 #### 讲解熟悉的开源库AFNetworking，MJExtension
 
