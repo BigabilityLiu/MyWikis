@@ -21,24 +21,37 @@
 
 * `strong(默认)`为该Object的属性设置新值时，设置方法会先retain保留新值，并release释放旧值，然后把新值设置上。当此Object变为nil，且无其他Object strong指引此属性时，此属性会被deallocated and released。同理，当所有的strong指引于此Object都变成nil时，该Object将被deallocated.
 * `copy` 与`strong`类似，但是设置方法并不保留新值，而是将其copy来。常用与像NSString这样自身不可变，但含有可变子类的Object上，来保护其封装性。因为传递给设置方法的新值可能是一个NSMutableString类的实例，此时若是不拷贝字符串，那么该属性可能会在不知情情况下执行可变方法导致更改，所以此时就要拷贝一份不可变的字符串，确保该属性不会被无意间变动。
-* `retain`==`strong`。`strong`用于最新的ARC模式下，而`retain`是MRC方式下的方法。<br>
-<b>blocks为什么要是用copy</b>(weakSelf should be used instead of self to avoid memory cycles) ?<br>
-苹果文档说：“Note: You should specify copy as the property attribute, because a block needs to be copied to keep track of its captured state outside of the original scope. This isn’t something you need to worry about when using Automatic Reference Counting, as it will happen automatically, but it’s best practice for the property attribute to show the resultant behavior. For more information, see Blocks Programming Topics.”<br>
+* `retain`==`strong`。`strong`用于最新的ARC模式下，而`retain`是MRC方式下的方法。
+
+blocks为什么要是用copy(weakSelf should be used instead of self to avoid memory cycles) ?
+
+苹果文档说：“Note: You should specify copy as the property attribute, because a block needs to be copied to keep track of its captured state outside of the original scope. This isn’t something you need to worry about when using Automatic Reference Counting, as it will happen automatically, but it’s best practice for the property attribute to show the resultant behavior. For more information, see Blocks Programming Topics.”
+
 解释：“block默认是创建在栈上，意味着它们只存在于它们被创建的空间里。为了以后你可以在其他地方使用它，它们必须被拷贝到堆上。在ARC中，当block在创建空间的其他地方被使用时，会被自动拷贝。实际中我们习惯显性写出copy”
 
 **弱指引**
 
 * `weak`为该属性设置新值时，既不保留新值，也不释放旧值。该属性是不是nil，该Object都可以释放。常用于delegates，同`assign`类似。
 * `unsafe_unretained`类似`weak`用于属性（Object）类型
-* `assign(默认)`效果与弱指引类似，主要用于纯量类型（scalar type）比如int CGFloat NSInteger；
-也可以用于Object类型
+* `assign(默认)`效果与弱指引类似，主要用于纯量类型（scalar type）比如int CGFloat NSInteger；也可以用于Object类型
 
 **区别在于** 当目标对象被摧毁后，`weak`属性会指向nil，而`unsafe_unretained`和`assign`属性值不会被清空，依然指向被摧毁的目标属性，造成野指针，所以说是不安全的。
 
 ## Blocks
 使用方法[fuckingblocksyntax.com](http://fuckingblocksyntax.com/)
 
-##### __block 关键字的底层实现原理
+#### block属性能不能用strong修饰
+
+首先，在以下情形中block会自动从栈拷贝到堆：
+
+1. 当 block 调用 copy 方法时，如果 block 在栈上，会被拷贝到堆上；
+2. 当 block 作为函数返回值时，编译器自动将 block 作为 _Block_copy 函数，效果等同于直接调用 copy 方法；
+3. **当 block 被赋值给 __strong id 类型的对象或 block 的成员变量时**，编译器自动将 block 作为 _Block_copy 函数，效果等同于直接调用 copy 方法；
+4. 当 block 作为参数被传入方法名带有usingBlock 的 Cocoa Framework 方法或 GCD 的 API 时。这些方法会在内部对传递进来的 block 调用 copy 或 _Block_copy 进行拷贝;
+
+所以可以理解为ARC下strong修饰的block并没有处于栈区的可能，也就不存在作用域结束栈区内容销毁野指针的问题了。 但是为了保证修饰符和block特性的一致性，使用copy修饰符仍然是最为合适的。
+
+#### __block 关键字的底层实现原理
 
 **block不允许修改外部变量的值**（这里所说的外部变量的值，指的是栈中 auto 变量）。但block可以读取外部变量的值，比如`NSMutableArray`。不可以直接赋值，但是可以执行他的` addObject`方法。
 
@@ -46,7 +59,7 @@
 
 如果要修改，需要满足以下两个条件：
 
-1. **将 auto(无修饰符修饰)变量 从栈 copy 到堆**，原因是：栈中内存管理是由系统管理，出了作用域就会被回收， 堆中才是可以由我们程序员管理。**在 ARC 中无论是否添加 `__block` ，block 中的 auto 变量都会被从栈上 copy 到堆上。**
+1. **将 auto(无修饰符修饰)变量从栈 copy 到堆**，原因是：栈中内存管理是由系统管理，出了作用域就会被回收，堆中才是可以由我们程序员管理。**在ARC中无论是否添加 `__block` ，block 中的auto变量都会被从栈上 copy 到堆上。**
 2. **将 auto 变量封装为结构体(对象)**。
 
 ## KVC & KVO
@@ -56,7 +69,7 @@
 
 ### KVO 总结
 
-KVO 是一个对象能观察另一个对象属性的值，KVO 适合任何对象监听另一个对象的改变，这是一个对象与另外一个对象保持同步的一种方法。KVO 只能对属性做出反应，不会用来对方法或者动作做出反应。
+KVO是一个对象能观察另一个对象属性的值，KVO适合任何对象监听另一个对象的改变，这是一个对象与另外一个对象保持同步的一种方法。KVO 只能对属性做出反应，不会用来对方法或者动作做出反应。
 
 #### 原理
 
@@ -80,13 +93,98 @@ KVO 是一个对象能观察另一个对象属性的值，KVO 适合任何对象
 1. 提供一个简单的方法来实现两个对象的同步。
 2. 能够提供观察的属性的新值和旧值。
 3. 每一次属性值改变都是自动发送通知，不需要开发者手动实现。
-4. 用 keypath 来观察属性，因此也可以观察嵌套对象。
+4. 用keypath来观察属性，因此也可以观察嵌套对象。
 
 **缺点：**
 
 1. 观察的属性必须使用字符串来定义，因此编译器不会出现警告和检查。
 2. 代码冗长，当观察多个对象的属性时就要写"if"语句，来判断当前的回调属于哪个对象的属性的回调。
 3. 推出时需要remove观察者
+
+#### 问题：KVO怎么实现，_语法会不会触发，成员变量会不会触发，KVC+成员变量会不会触发，不用setter怎么触发KVO
+
+##### 实现原理
+
+- KVO是通过isa-swizzling技术实现的(这句话是整个KVO实现的重点)。
+- 在运行时根据原类创建一个中间类，这个中间类是原类的子类，并动态修改当前对象的isa指向中间类。当修改 instance 对象的属性时，会调用 Foundation框架的 _NSSetXXXValueAndNotify 函数 ,该函数里面会先调用 willChangeValueForKey: 然后调用父类原来的 setter 方法修改值，最后是 didChangeValueForKey:。didChangeValueForKey 内部会触发监听器（Oberser）的监听方法observeValueForKeyPath:ofObject:change:context:
+- 并且将class方法重写，返回原类的Class。
+
+```objective-c
+#import "ViewController.h"
+
+@interface ViewController () {
+  // 成员变量
+    NSString* job;
+}
+// 属性变量
+@property (nonatomic, copy) NSString* name;
+@end
+
+@implementation ViewController
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.name = @"1";
+    [self addObserver:self forKeyPath:@"name" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:nil];
+    self.name = @"2";
+//    _语法不会触发，因为不会调用set方法
+    _name = @"3";
+    NSLog(@"name = %@", _name);
+    
+    job = @"a";
+    [self addObserver:self forKeyPath:@"job" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:nil];
+//    成员变量不会触发，因为不会调用set方法
+    job = @"b";
+//    成员变量会触发，因为注册了observer就会有set方法，使用KVC就会调用set方法
+    [self setValue:@"c" forKey:@"job"];
+// 		也可以手动触发KVO
+    [self willChangeValueForKey:@"job"];
+    job = @"d";
+    [self didChangeValueForKey:@"job"];
+    NSLog(@"job = %@", job);
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if ([keyPath isEqualToString:@"name"]) {
+        NSLog(@"change = %@", change);
+    }
+    else if ([keyPath isEqualToString:@"job"]) {
+        NSLog(@"change = %@", change);
+    }
+    else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
+}
+- (void)dealloc
+{
+    [self removeObserver:self forKeyPath:@"name"];
+    [self removeObserver:self forKeyPath:@"job"];
+}
+@end
+```
+
+```objective-c
+被打印的结果
+change = {
+    kind = 1;
+    new = 2;
+    old = 1;
+}
+name = 3
+change = {
+    kind = 1;
+    new = c;
+    old = b;
+}
+change = {
+    kind = 1;
+    new = d;
+    old = c;
+}
+job = d
+```
+
+
 
 ### KVC 总结
 
@@ -100,8 +198,8 @@ KVO 是一个对象能观察另一个对象属性的值，KVO 适合任何对象
 **缺点：**
 
 1. 一旦使用 KVC 你的编译器无法检查出错误，即不会对设置的键、键值路径进行错误检查。
-2. 执行效率要低于 setter 和 getter 方法。因为使用 KVC 键值编码，它必须先解析字符串，然后在设置或者访问对象的实例变量。
-3. 使用 KVC 会破坏类的封装性
+2. 执行效率要低于setter和getter方法。因为使用 KVC 键值编码，它必须先解析字符串，然后在设置或者访问对象的实例变量。
+3. 使用 KVC 会破坏类的封装性。
 
 ## weakSelf & strongSelf
 [深入研究 Block 用 weakSelf、strongSelf、@weakify、@strongify 解决循环引用](https://halfrost.com/ios_block_retain_circle/)
@@ -193,7 +291,7 @@ strongSelf的目的是因为一旦进入block执行，不允许self在这个执�
 局部变量,在.m文件中的使用static const来定义，例如：
 
  ```objective-c
- static const NSString* TestString = @"TestString";
+static const NSString* TestString = @"TestString";
  ```
 全局变量，需要.h文件中使用extern来声明，并在.m文件中实现，通常其名称需要加以隔离，通常用类名做前缀。例如：
 ```objective-c
