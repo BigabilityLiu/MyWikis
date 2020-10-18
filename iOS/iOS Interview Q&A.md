@@ -166,6 +166,7 @@ Objective-C 是一个动态语言，这意味着它不仅需要一个编译器�
 
 * synchronous（同步） 任务执行完成后reture，（阻塞）
 * asynchronous（异步） 不等待任务执行完成，立即reture，（不阻塞当前）
+
 我们还用同步异步，描述某一个任务。比如说任务A是同步执行的。这就是在说，A任务，会阻塞当前任务，直到A结束。这是指不同任务之间的关系，与队列无关，可以是不同队列，也可以是相同队列。
 
 ##### [同步锁:如何实现一个文件（属性）的多线程读，单线程写](https://github.com/BigabilityLiu/MyWikis/blob/master/iOS/Objective-C%20Notes.md#%E7%AC%AC41%E6%9D%A1-%E5%A4%9A%E7%94%A8%E6%B4%BE%E5%8F%91%E9%98%9F%E5%88%97%E5%B0%91%E7%94%A8%E5%90%8C%E6%AD%A5%E9%94%81)
@@ -317,7 +318,7 @@ Protocol * __nullable NSProtocolFromString(NSString *namestr);
 
 Runtime维护了一个Weak表，用于存储指向某个对象的所有Weak指针。Weak表其实是一个哈希表，Key是所指对象（obj）的地址，Value是包含Weak指针（obj_weak）的地址数组；
 
-weak 的实现原理可以概括一下三步：
+weak 的实现原理可以概括以下三步：
 
 1、初始化时：runtime会调用objc_initWeak函数，初始化一个新的weak指针指向对象的地址。
 
@@ -399,6 +400,8 @@ atomic以前是用的OSSpinLock实现，现在是os_unfair_lock
 #### 一个类，如何不让别人访问某些方法
 
 NS_UNAVAILABLE
+
+#### [iOS如何实现多代理模式--OC](https://www.jianshu.com/p/fed580fa45eb)
 
 #### 讲解熟悉的开源库AFNetworking, MJExtension, SDWebImage
 #### Runloop，Runtime源码阅读
